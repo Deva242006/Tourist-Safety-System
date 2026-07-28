@@ -25,10 +25,13 @@ public class Tourist {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false)
+    private String password; // BCrypt-hashed
+
     private String phone;
 
     @Column(nullable = false, unique = true)
-    private String documentNumber;
+    private String documentNumber; // passport or national ID number
 
     /** SHA-256 hash of KYC fields, used to seed the Digital ID hash-chain */
     private String kycHash;
