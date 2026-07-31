@@ -2,9 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMyDigitalId, getSession } from '../api/auth'
 import { getZones, checkLocation } from '../api/zones'
+import { connectSocket, disconnectSocket, sendLocationUpdate, sendSos } from '../api/socket'
 import DigitalIdCard from '../components/DigitalIdCard.jsx'
 import ZoneMap from '../components/ZoneMap.jsx'
 import AddZoneForm from '../components/AddZoneForm.jsx'
+
+const LOCATION_PUSH_INTERVAL_MS = 15000
 
 export default function TouristDashboard() {
     const [digitalId, setDigitalId] = useState(null)
@@ -13,27 +16,47 @@ export default function TouristDashboard() {
     const [position, setPosition] = useState(null)
     const [checkResult, setCheckResult] = useState(null)
     const [checking, setChecking] = useState(false)
+    const [sosSent, setSosSent] = useState(false)
     const navigate = useNavigate()
+    const session = getSession()
 
     const loadZones = useCallback(() => {
         getZones().then(setZones).catch(() => setZones([]))
     }, [])
 
     useEffect(() => {
-        const session = getSession()
         if (!session) {
             navigate('/login')
             return
         }
         getMyDigitalId().then(setDigitalId).catch(() => setDigitalId(null)).finally(() => setLoading(false))
         loadZones()
-    }, [navigate, loadZones])
+    }, [navigate, loadZones, session?.touristId])
+
+    useEffect(() => {
+        if (!session) return
+        connectSocket()
+
+        function pushLocation() {
+            if (!navigator.geolocation) return
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const { latitude, longitude } = pos.coords
+                setPosition([latitude, longitude])
+                sendLocationUpdate(session.touristId, latitude, longitude)
+            })
+        }
+
+        pushLocation()
+        const interval = setInterval(pushLocation, LOCATION_PUSH_INTERVAL_MS)
+
+        return () => {
+            clearInterval(interval)
+            disconnectSocket()
+        }
+    }, [session?.touristId])
 
     function handleCheckLocation() {
-        if (!navigator.geolocation) {
-            alert('Geolocation is not supported by this browser.')
-            return
-        }
+        if (!navigator.geolocation) { alert('Geolocation is not supported by this browser.'); return }
         setChecking(true)
         navigator.geolocation.getCurrentPosition(
             async (pos) => {
@@ -49,6 +72,19 @@ export default function TouristDashboard() {
                 }
             },
             () => { setChecking(false); alert('Could not get your location. Check browser location permissions.') }
+        )
+    }
+
+    function handleSos() {
+        if (!navigator.geolocation) { alert('Geolocation is not supported by this browser.'); return }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords
+                sendSos(session.touristId, latitude, longitude, 'Emergency SOS triggered from tourist app')
+                setSosSent(true)
+                setTimeout(() => setSosSent(false), 5000)
+            },
+            () => alert('Could not get your location for SOS. Check browser location permissions.')
         )
     }
 
@@ -74,6 +110,9 @@ export default function TouristDashboard() {
                                 'No risk zones at this location.'}
                     </p>
                 )}
+                <p className="mt-2 text-xs text-slate-400">
+                    {position ? `Live tracking active — pushing location every ${LOCATION_PUSH_INTERVAL_MS / 1000}s` : 'Waiting for location...'}
+                </p>
             </div>
             <div className="flex flex-col gap-4">
                 {loading ? <div className="bg-white rounded-lg shadow p-4 text-sm text-slate-400">Loading Digital ID...</div> : <DigitalIdCard digitalId={digitalId} />}
@@ -82,7 +121,10 @@ export default function TouristDashboard() {
                     <p className="text-3xl font-bold text-risk-low">—</p>
                     <p className="text-xs text-slate-400">Computed Day 5 (anomaly detection)</p>
                 </div>
-                <button className="bg-red-600 text-white rounded-lg shadow p-4 font-semibold text-lg">🆘 SOS (wired Day 4)</button>
+                <button onClick={handleSos} className="bg-red-600 hover:bg-red-700 text-white rounded-lg shadow p-4 font-semibold text-lg transition-colors">
+                    🆘 SOS
+                </button>
+                {sosSent && <p className="text-sm text-red-600 text-center -mt-2">✓ SOS sent — authorities have been notified</p>}
             </div>
         </div>
     )

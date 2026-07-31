@@ -23,8 +23,8 @@ function Recenter({ position }) {
     return null
 }
 
-export default function ZoneMap({ zones, position }) {
-    const center = position || [26.1445, 91.7362] // default: Guwahati, Assam
+export default function ZoneMap({ zones, position, markers = [] }) {
+    const center = position || (markers[0] && [markers[0].lat, markers[0].lng]) || [26.1445, 91.7362] // default: Guwahati, Assam
 
     return (
         <MapContainer center={center} zoom={12} style={{ height: '100%', width: '100%' }}>
@@ -39,6 +39,11 @@ export default function ZoneMap({ zones, position }) {
                 </Polygon>
             ))}
             {position && <Marker position={position}><Popup>You are here</Popup></Marker>}
+            {markers.map((m) => (
+                <Marker key={m.id} position={[m.lat, m.lng]}>
+                    <Popup>{m.label || 'Tourist'}</Popup>
+                </Marker>
+            ))}
             <Recenter position={position} />
         </MapContainer>
     )
