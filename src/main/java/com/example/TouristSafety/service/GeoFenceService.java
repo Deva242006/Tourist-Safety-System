@@ -15,6 +15,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class GeoFenceService {
@@ -59,7 +61,7 @@ public class GeoFenceService {
             if (isPointInPolygon(latitude, longitude, polygon)) {
                 matches.add(new ZoneCheckResponse.MatchedZone(zone.getId(), zone.getName(), zone.getRiskLevel()));
 
-                if (!"LOW".equalsIgnoreCase(zone.getRiskLevel())) {
+                if (!"LOW".equalsIgnoreCase(zone.getRiskLevel()) && !hasRecentOpenAlert(touristId, zone.getId())) {
                     Alert alert = Alert.builder()
                             .touristId(touristId)
                             .zoneId(zone.getId())
@@ -118,5 +120,12 @@ public class GeoFenceService {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to parse stored polygon", e);
         }
+    }
+    private boolean hasRecentOpenAlert(UUID touristId, UUID zoneId) {
+        Instant cutoff = Instant.now().minus(5, ChronoUnit.MINUTES);
+        return alertRepository.findByTouristIdOrderByCreatedAtDesc(touristId).stream()
+                .anyMatch(a -> zoneId.equals(a.getZoneId())
+                        && "OPEN".equals(a.getStatus())
+                        && a.getCreatedAt().isAfter(cutoff));
     }
 }
