@@ -6,6 +6,7 @@ import { connectSocket, disconnectSocket, sendLocationUpdate, sendSos } from '..
 import DigitalIdCard from '../components/DigitalIdCard.jsx'
 import ZoneMap from '../components/ZoneMap.jsx'
 import AddZoneForm from '../components/AddZoneForm.jsx'
+import SafetyScoreCard from '../components/SafetyScoreCard.jsx'
 
 const LOCATION_PUSH_INTERVAL_MS = 15000
 
@@ -116,11 +117,7 @@ export default function TouristDashboard() {
             </div>
             <div className="flex flex-col gap-4">
                 {loading ? <div className="bg-white rounded-lg shadow p-4 text-sm text-slate-400">Loading Digital ID...</div> : <DigitalIdCard digitalId={digitalId} />}
-                <div className="bg-white rounded-lg shadow p-4">
-                    <h2 className="font-semibold mb-1">Safety Score</h2>
-                    <p className="text-3xl font-bold text-risk-low">—</p>
-                    <p className="text-xs text-slate-400">Computed Day 5 (anomaly detection)</p>
-                </div>
+                <SafetyScoreCard />
                 <button onClick={handleSos} className="bg-red-600 hover:bg-red-700 text-white rounded-lg shadow p-4 font-semibold text-lg transition-colors">
                     🆘 SOS
                 </button>
