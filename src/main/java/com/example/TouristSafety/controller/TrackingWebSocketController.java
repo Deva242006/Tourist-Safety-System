@@ -9,6 +9,7 @@ import com.example.TouristSafety.entity.Alert;
 import com.example.TouristSafety.entity.LocationLog;
 import com.example.TouristSafety.repository.AlertRepository;
 import com.example.TouristSafety.repository.LocationLogRepository;
+import com.example.TouristSafety.service.AnomalyDetectionService;
 import com.example.TouristSafety.service.GeoFenceService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,31 +23,36 @@ public class TrackingWebSocketController {
     private final LocationLogRepository locationLogRepository;
     private final AlertRepository alertRepository;
     private final GeoFenceService geoFenceService;
+    private final AnomalyDetectionService anomalyDetectionService;
     private final SimpMessagingTemplate messagingTemplate;
 
     public TrackingWebSocketController(LocationLogRepository locationLogRepository,
                                        AlertRepository alertRepository,
                                        GeoFenceService geoFenceService,
+                                       AnomalyDetectionService anomalyDetectionService,
                                        SimpMessagingTemplate messagingTemplate) {
         this.locationLogRepository = locationLogRepository;
         this.alertRepository = alertRepository;
         this.geoFenceService = geoFenceService;
+        this.anomalyDetectionService = anomalyDetectionService;
         this.messagingTemplate = messagingTemplate;
     }
 
     @MessageMapping("/location.update")
     public void updateLocation(LocationUpdateMessage msg) {
+        Instant now = Instant.now();
+
         LocationLog log = LocationLog.builder()
                 .touristId(msg.touristId())
                 .latitude(msg.latitude())
                 .longitude(msg.longitude())
-                .recordedAt(Instant.now())
+                .recordedAt(now)
                 .build();
         locationLogRepository.save(log);
 
         messagingTemplate.convertAndSend(
                 "/topic/tracking",
-                new LocationBroadcast(msg.touristId(), msg.latitude(), msg.longitude(), Instant.now()));
+                new LocationBroadcast(msg.touristId(), msg.latitude(), msg.longitude(), now));
 
         ZoneCheckResponse zoneCheck = geoFenceService.checkLocation(msg.touristId(), msg.latitude(), msg.longitude());
 
@@ -56,10 +62,12 @@ public class TrackingWebSocketController {
                     messagingTemplate.convertAndSend("/topic/alerts", new AlertBroadcast(
                             null, msg.touristId(), "GEOFENCE", match.riskLevel(),
                             "Entered risk zone: " + match.zoneName(),
-                            msg.latitude(), msg.longitude(), "OPEN", Instant.now()));
+                            msg.latitude(), msg.longitude(), "OPEN", now));
                 }
             }
         }
+
+        anomalyDetectionService.checkRouteDeviation(msg.touristId(), msg.latitude(), msg.longitude(), now);
     }
 
     @MessageMapping("/sos")
