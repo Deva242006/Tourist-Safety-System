@@ -2,12 +2,13 @@ import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 
 let client = null
+const WS_URL = import.meta.env.VITE_WS_URL || '/ws'
 
 export function connectSocket({ onTracking, onAlert } = {}) {
     if (client && client.active) return client
 
     client = new Client({
-        webSocketFactory: () => new SockJS('/ws'),
+        webSocketFactory: () => new SockJS(WS_URL),
         reconnectDelay: 3000,
         onConnect: () => {
             if (onTracking) {

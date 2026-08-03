@@ -1,8 +1,7 @@
 import axios from 'axios'
 
-// Vite proxy forwards /api to http://localhost:8080 (see vite.config.js)
 const client = axios.create({
-  baseURL: '/api'
+  baseURL: import.meta.env.VITE_API_URL || '/api'
 })
 
 client.interceptors.request.use((config) => {

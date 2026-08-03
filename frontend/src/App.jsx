@@ -4,6 +4,7 @@ import Register from './pages/Register.jsx'
 import TouristDashboard from './pages/TouristDashboard.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
 import Navbar from './components/Navbar.jsx'
+import GlobalSosButton from './components/GlobalSosButton.jsx'
 
 export default function App() {
   return (
