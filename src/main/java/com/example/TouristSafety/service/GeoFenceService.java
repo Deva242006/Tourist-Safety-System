@@ -62,14 +62,20 @@ public class GeoFenceService {
                 matches.add(new ZoneCheckResponse.MatchedZone(zone.getId(), zone.getName(), zone.getRiskLevel()));
 
                 if (!"LOW".equalsIgnoreCase(zone.getRiskLevel()) && !hasRecentOpenAlert(touristId, zone.getId())) {
+                    boolean isHighRisk = "HIGH".equalsIgnoreCase(zone.getRiskLevel());
+                    String severity = isHighRisk ? "CRITICAL" : zone.getRiskLevel();
+                    String message = isHighRisk
+                            ? "AUTOMATIC ALERT: Entered HIGH risk zone \"" + zone.getName() + "\" -- immediate attention required"
+                            : "Entered risk zone: " + zone.getName();
+
                     Alert alert = Alert.builder()
                             .touristId(touristId)
                             .zoneId(zone.getId())
                             .type("GEOFENCE")
-                            .severity(zone.getRiskLevel())
+                            .severity(severity)
                             .latitude(latitude)
                             .longitude(longitude)
-                            .message("Entered risk zone: " + zone.getName())
+                            .message(message)
                             .status("OPEN")
                             .build();
                     alertRepository.save(alert);

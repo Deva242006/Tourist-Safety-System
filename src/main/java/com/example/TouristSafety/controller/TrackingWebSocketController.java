@@ -55,13 +55,17 @@ public class TrackingWebSocketController {
                 new LocationBroadcast(msg.touristId(), msg.latitude(), msg.longitude(), now));
 
         ZoneCheckResponse zoneCheck = geoFenceService.checkLocation(msg.touristId(), msg.latitude(), msg.longitude());
-
         if (zoneCheck.insideAnyZone()) {
             for (var match : zoneCheck.matchedZones()) {
                 if (!"LOW".equalsIgnoreCase(match.riskLevel())) {
+                    boolean isHighRisk = "HIGH".equalsIgnoreCase(match.riskLevel());
+                    String severity = isHighRisk ? "CRITICAL" : match.riskLevel();
+                    String message = isHighRisk
+                            ? "AUTOMATIC ALERT: Entered HIGH risk zone \"" + match.zoneName() + "\" -- immediate attention required"
+                            : "Entered risk zone: " + match.zoneName();
+
                     messagingTemplate.convertAndSend("/topic/alerts", new AlertBroadcast(
-                            null, msg.touristId(), "GEOFENCE", match.riskLevel(),
-                            "Entered risk zone: " + match.zoneName(),
+                            null, msg.touristId(), "GEOFENCE", severity, message,
                             msg.latitude(), msg.longitude(), "OPEN", now));
                 }
             }
