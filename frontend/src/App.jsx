@@ -8,9 +8,9 @@ import GlobalSosButton from './components/GlobalSosButton.jsx'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#080c14] text-slate-100 flex flex-col">
       <Navbar />
-      <main className="max-w-6xl mx-auto p-4">
+      <main className="max-w-6xl mx-auto p-4 w-full flex-grow">
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
@@ -19,6 +19,7 @@ export default function App() {
           <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </main>
+      <GlobalSosButton />
     </div>
   )
 }
