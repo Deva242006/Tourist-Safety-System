@@ -12,44 +12,93 @@ export default function Navbar() {
     }
 
     return (
-        <nav className="bg-slate-950/70 backdrop-blur-md border-b border-slate-900 px-6 py-4 flex items-center justify-between sticky top-0 z-[999]">
-            <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
-                <span className="text-xl">🧭</span>
-                <span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 bg-clip-text text-transparent font-extrabold text-lg">
-                    Tourist Safety System
+        <nav className="sticky top-0 z-[999] border-b px-6 py-3.5 flex items-center justify-between" style={{
+            background: 'rgba(6, 9, 15, 0.8)',
+            backdropFilter: 'blur(20px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+            borderColor: 'var(--border-subtle)'
+        }}>
+            <Link to="/" className="flex items-center gap-2.5 no-underline group" id="nav-home">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{
+                    background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.15) 0%, rgba(129, 140, 248, 0.15) 100%)',
+                    border: '1px solid rgba(34, 211, 238, 0.2)'
+                }}>
+                    🛡️
+                </div>
+                <span className="gradient-text font-extrabold text-lg tracking-tight">
+                    SafeGuard
                 </span>
             </Link>
-            <div className="flex items-center gap-5 text-sm">
+            <div className="flex items-center gap-2">
                 {session ? (
                     <>
-                        <div className="bg-slate-900/60 border border-slate-800/80 px-3 py-1 rounded-full text-slate-300 text-xs hidden sm:flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Hi, <span className="font-semibold text-slate-200">{session.fullName}</span>
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs" style={{
+                            background: 'rgba(15, 23, 42, 0.6)',
+                            border: '1px solid var(--border-subtle)'
+                        }}>
+                            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent-emerald)' }} />
+                            <span style={{ color: 'var(--text-muted)' }}>Hi,</span>
+                            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{session.fullName}</span>
                         </div>
-                        <Link to="/tourist" className="text-slate-300 transition-colors duration-200 hover:text-cyan-400 px-2.5 py-1 rounded-md hover:bg-slate-900/30">
-                            Tourist App
-                        </Link>
-                        <Link to="/admin" className="text-slate-300 transition-colors duration-200 hover:text-cyan-400 px-2.5 py-1 rounded-md hover:bg-slate-900/30">
-                            Admin Deck
-                        </Link>
-                        <button onClick={handleLogout} className="text-rose-400 transition-colors duration-200 hover:text-rose-300 hover:bg-rose-950/30 px-3 py-1 rounded-md font-medium">
+                        <NavLink to="/tourist" id="nav-tourist">Tourist</NavLink>
+                        <NavLink to="/admin" id="nav-admin">Admin</NavLink>
+                        <button
+                            onClick={handleLogout}
+                            id="nav-logout"
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+                            style={{
+                                color: 'var(--accent-rose)',
+                                background: 'transparent'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.background = 'rgba(251, 113, 133, 0.1)'
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.background = 'transparent'
+                            }}
+                        >
                             Logout
                         </button>
                     </>
                 ) : (
                     <>
-                        <Link to="/login" className="text-slate-300 transition-colors duration-200 hover:text-cyan-400 px-2.5 py-1 rounded-md hover:bg-slate-900/30">
-                            Login
-                        </Link>
-                        <Link to="/register" className="text-slate-300 transition-colors duration-200 hover:text-cyan-400 px-2.5 py-1 rounded-md hover:bg-slate-900/30">
-                            Register
-                        </Link>
-                        <Link to="/admin" className="text-slate-300 transition-colors duration-200 hover:text-cyan-400 px-2.5 py-1 rounded-md hover:bg-slate-900/30">
-                            Admin Deck
-                        </Link>
+                        <NavLink to="/login" id="nav-login">Login</NavLink>
+                        <NavLink to="/register" id="nav-register">Register</NavLink>
+                        <NavLink to="/admin" id="nav-admin-public">Admin</NavLink>
                     </>
                 )}
             </div>
         </nav>
+    )
+}
+
+function NavLink({ to, children, id }) {
+    const location = useLocation()
+    const isActive = location.pathname === to
+
+    return (
+        <Link
+            to={to}
+            id={id}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 no-underline"
+            style={{
+                color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                background: isActive ? 'rgba(34, 211, 238, 0.08)' : 'transparent'
+            }}
+            onMouseEnter={(e) => {
+                if (!isActive) {
+                    e.target.style.color = 'var(--text-primary)'
+                    e.target.style.background = 'rgba(148, 163, 184, 0.08)'
+                }
+            }}
+            onMouseLeave={(e) => {
+                if (!isActive) {
+                    e.target.style.color = 'var(--text-secondary)'
+                    e.target.style.background = 'transparent'
+                }
+            }}
+        >
+            {children}
+        </Link>
     )
 }

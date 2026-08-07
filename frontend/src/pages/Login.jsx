@@ -25,37 +25,85 @@ export default function Login() {
   }
 
   return (
-      <div className="max-w-sm mx-auto mt-16 bg-white p-6 rounded-lg shadow">
-        <h1 className="text-xl font-semibold mb-4">Login</h1>
-        {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <input
-              className="border rounded px-3 py-2"
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-          />
-          <input
-              className="border rounded px-3 py-2"
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-          />
-          <button
-              className="bg-slate-900 text-white rounded px-3 py-2 mt-2 disabled:opacity-50"
+    <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+      <div className="w-full max-w-md animate-fade-in-up" style={{ position: 'relative', zIndex: 1 }}>
+        {/* Top decorative gradient */}
+        <div style={{
+          position: 'absolute',
+          top: '-60px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '200px',
+          height: '120px',
+          background: 'radial-gradient(ellipse, rgba(34, 211, 238, 0.12) 0%, transparent 70%)',
+          pointerEvents: 'none'
+        }} />
+
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{
+            background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.12) 0%, rgba(129, 140, 248, 0.12) 100%)',
+            border: '1px solid rgba(34, 211, 238, 0.15)'
+          }}>
+            <span className="text-2xl">🛡️</span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight gradient-text">Welcome Back</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Sign in to your tourist safety account</p>
+        </div>
+
+        <div className="glass-card p-6">
+          {error && (
+            <div className="mb-4 p-3 rounded-lg text-sm animate-slide-down" style={{
+              background: 'rgba(251, 113, 133, 0.1)',
+              border: '1px solid rgba(251, 113, 133, 0.2)',
+              color: 'var(--accent-rose)'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4" id="login-form">
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Email</label>
+              <input
+                className="glass-input"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                id="login-email"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Password</label>
+              <input
+                className="glass-input"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                id="login-password"
+              />
+            </div>
+            <button
+              className="btn-primary mt-2 w-full"
               type="submit"
               disabled={loading}
-          >
-            {loading ? 'Logging in...' : 'Log in'}
-          </button>
-        </form>
-        <p className="text-sm text-slate-500 mt-4">
-          No account? <Link to="/register" className="text-slate-900 underline">Register</Link>
+              id="login-submit"
+            >
+              <span>{loading ? 'Signing in...' : 'Sign In'}</span>
+            </button>
+          </form>
+        </div>
+
+        <p className="text-sm text-center mt-6" style={{ color: 'var(--text-muted)' }}>
+          No account?{' '}
+          <Link to="/register" className="font-medium transition-colors duration-200 no-underline" style={{ color: 'var(--accent-cyan)' }} id="login-register-link">
+            Create one
+          </Link>
         </p>
       </div>
+    </div>
   )
 }

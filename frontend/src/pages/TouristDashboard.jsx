@@ -90,38 +90,68 @@ export default function TouristDashboard() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="bg-white rounded-lg shadow p-4 md:col-span-2">
-                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                    <h2 className="font-semibold">Live Map</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+            <div className="glass-panel rounded-xl p-5 md:col-span-2">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <h2 className="font-bold text-sm tracking-wider uppercase text-slate-300">🗺️ Live Map</h2>
                     <div className="flex gap-2">
                         <AddZoneForm onCreated={loadZones} />
-                        <button onClick={handleCheckLocation} disabled={checking} className="text-sm bg-slate-900 text-white rounded px-3 py-2 disabled:opacity-50">
-                            {checking ? 'Checking...' : '📍 Check My Location'}
+                        <button onClick={handleCheckLocation} disabled={checking}
+                                className="text-sm bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 text-white rounded-lg px-4 py-2 disabled:opacity-50 transition-all duration-200 shadow-md shadow-cyan-500/15 font-medium">
+                            {checking ? (
+                                <span className="flex items-center gap-2">
+                                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                    Checking...
+                                </span>
+                            ) : '📍 Check My Location'}
                         </button>
                     </div>
                 </div>
-                <div className="h-80 rounded overflow-hidden">
+                <div className="h-80 rounded-lg overflow-hidden border border-slate-800/60">
                     <ZoneMap zones={zones} position={position} />
                 </div>
                 {checkResult && (
-                    <p className={`mt-2 text-sm ${checkResult.insideAnyZone ? 'text-red-600 font-medium' : 'text-slate-500'}`}>
-                        {checkResult.error ? 'Location check failed.' :
+                    <div className={`mt-3 text-sm px-4 py-2.5 rounded-lg ${checkResult.insideAnyZone
+                        ? 'bg-rose-500/10 border border-rose-500/20 text-rose-300 font-medium'
+                        : 'bg-slate-800/50 border border-slate-700/50 text-slate-400'}`}>
+                        {checkResult.error ? '⚠ Location check failed.' :
                             checkResult.insideAnyZone ? `⚠️ Inside ${checkResult.matchedZones.length} risk zone(s): ${checkResult.matchedZones.map(z => `${z.zoneName} (${z.riskLevel})`).join(', ')}` :
-                                'No risk zones at this location.'}
-                    </p>
+                                '✓ No risk zones at this location.'}
+                    </div>
                 )}
-                <p className="mt-2 text-xs text-slate-400">
-                    {position ? `Live tracking active — pushing location every ${LOCATION_PUSH_INTERVAL_MS / 1000}s` : 'Waiting for location...'}
+                <p className="mt-3 text-xs text-slate-500 flex items-center gap-1.5">
+                    {position ? (
+                        <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Live tracking active — pushing location every {LOCATION_PUSH_INTERVAL_MS / 1000}s
+                        </>
+                    ) : (
+                        <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            Waiting for location...
+                        </>
+                    )}
                 </p>
             </div>
             <div className="flex flex-col gap-4">
-                {loading ? <div className="bg-white rounded-lg shadow p-4 text-sm text-slate-400">Loading Digital ID...</div> : <DigitalIdCard digitalId={digitalId} />}
+                {loading ? (
+                    <div className="glass-panel rounded-xl p-5">
+                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                            <span className="w-3.5 h-3.5 border-2 border-slate-600 border-t-cyan-400 rounded-full animate-spin"></span>
+                            Loading Digital ID...
+                        </div>
+                    </div>
+                ) : <DigitalIdCard digitalId={digitalId} />}
                 <SafetyScoreCard />
-                <button onClick={handleSos} className="bg-red-600 hover:bg-red-700 text-white rounded-lg shadow p-4 font-semibold text-lg transition-colors">
-                    🆘 SOS
+                <button onClick={handleSos}
+                        className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl shadow-lg p-5 font-bold text-lg transition-all duration-300 animate-sos-pulse">
+                    🆘 SOS — Emergency Alert
                 </button>
-                {sosSent && <p className="text-sm text-red-600 text-center -mt-2">✓ SOS sent — authorities have been notified</p>}
+                {sosSent && (
+                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-4 py-2 text-sm text-rose-400 text-center -mt-2">
+                        ✓ SOS sent — authorities have been notified
+                    </div>
+                )}
             </div>
         </div>
     )

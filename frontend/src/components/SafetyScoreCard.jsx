@@ -2,10 +2,30 @@ import { useEffect, useState } from 'react'
 import { getMySafetyScore } from '../api/safety'
 
 const LEVEL_STYLE = {
-    SAFE: { text: 'text-green-600', bar: 'bg-green-500', badge: 'bg-green-100 text-green-700' },
-    CAUTION: { text: 'text-amber-600', bar: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700' },
-    AT_RISK: { text: 'text-orange-600', bar: 'bg-orange-500', badge: 'bg-orange-100 text-orange-700' },
-    CRITICAL: { text: 'text-red-600', bar: 'bg-red-500', badge: 'bg-red-100 text-red-700' }
+    SAFE: {
+        color: 'var(--accent-emerald)',
+        bar: 'linear-gradient(90deg, #34d399 0%, #22d3ee 100%)',
+        badgeClass: 'badge-success',
+        glow: 'rgba(52, 211, 153, 0.15)'
+    },
+    CAUTION: {
+        color: 'var(--accent-amber)',
+        bar: 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)',
+        badgeClass: 'badge-warning',
+        glow: 'rgba(251, 191, 36, 0.15)'
+    },
+    AT_RISK: {
+        color: '#f97316',
+        bar: 'linear-gradient(90deg, #f97316 0%, #ef4444 100%)',
+        badgeClass: 'badge-warning',
+        glow: 'rgba(249, 115, 22, 0.15)'
+    },
+    CRITICAL: {
+        color: 'var(--accent-rose)',
+        bar: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
+        badgeClass: 'badge-danger',
+        glow: 'rgba(239, 68, 68, 0.15)'
+    }
 }
 
 const REFRESH_INTERVAL_MS = 30000
@@ -26,23 +46,48 @@ export default function SafetyScoreCard() {
     const style = LEVEL_STYLE[data?.level] || LEVEL_STYLE.SAFE
 
     return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <div className="flex items-center justify-between mb-1">
-                <h2 className="font-semibold">Safety Score</h2>
-                {data && <span className={`text-xs px-2 py-0.5 rounded-full ${style.badge}`}>{data.level.replace('_', ' ')}</span>}
+        <div className="glass-card p-5 animate-fade-in-up" id="safety-score-card" style={{ animationDelay: '0.1s' }}>
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                    <span className="text-lg">🛡️</span>
+                    <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Safety Score</h2>
+                </div>
+                {data && <span className={`badge ${style.badgeClass}`}>{data.level.replace('_', ' ')}</span>}
             </div>
+
             {loading ? (
-                <p className="text-sm text-slate-400">Calculating...</p>
+                <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent-cyan)', borderTopColor: 'transparent' }} />
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Calculating...</p>
+                </div>
             ) : !data ? (
-                <p className="text-sm text-slate-400">Unable to load score.</p>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Unable to load score.</p>
             ) : (
                 <>
-                    <p className={`text-3xl font-bold ${style.text}`}>{data.score}</p>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 mb-2">
-                        <div className={`h-1.5 rounded-full ${style.bar}`} style={{ width: `${data.score}%` }} />
+                    <div className="flex items-baseline gap-1 mb-3">
+                        <span className="stat-value" style={{ color: style.color }}>{data.score}</span>
+                        <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>/100</span>
                     </div>
-                    <ul className="text-xs text-slate-500 space-y-0.5">
-                        {data.factors.map((f, i) => <li key={i}>• {f}</li>)}
+
+                    {/* Progress bar */}
+                    <div className="w-full h-1.5 rounded-full mb-3" style={{ background: 'rgba(148, 163, 184, 0.08)' }}>
+                        <div
+                            className="h-1.5 rounded-full transition-all duration-1000 ease-out"
+                            style={{
+                                width: `${data.score}%`,
+                                background: style.bar,
+                                boxShadow: `0 0 8px ${style.glow}`
+                            }}
+                        />
+                    </div>
+
+                    <ul className="space-y-1">
+                        {data.factors.map((f, i) => (
+                            <li key={i} className="text-xs flex items-start gap-1.5" style={{ color: 'var(--text-muted)' }}>
+                                <span style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>›</span>
+                                {f}
+                            </li>
+                        ))}
                     </ul>
                 </>
             )}
