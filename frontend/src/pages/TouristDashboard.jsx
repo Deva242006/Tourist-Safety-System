@@ -26,10 +26,7 @@ export default function TouristDashboard() {
     }, [])
 
     useEffect(() => {
-        if (!session) {
-            navigate('/login')
-            return
-        }
+        if (!session) { navigate('/login'); return }
         getMyDigitalId().then(setDigitalId).catch(() => setDigitalId(null)).finally(() => setLoading(false))
         loadZones()
     }, [navigate, loadZones, session?.touristId])
@@ -37,7 +34,6 @@ export default function TouristDashboard() {
     useEffect(() => {
         if (!session) return
         connectSocket()
-
         function pushLocation() {
             if (!navigator.geolocation) return
             navigator.geolocation.getCurrentPosition((pos) => {
@@ -46,14 +42,9 @@ export default function TouristDashboard() {
                 sendLocationUpdate(session.touristId, latitude, longitude)
             })
         }
-
         pushLocation()
         const interval = setInterval(pushLocation, LOCATION_PUSH_INTERVAL_MS)
-
-        return () => {
-            clearInterval(interval)
-            disconnectSocket()
-        }
+        return () => { clearInterval(interval); disconnectSocket() }
     }, [session?.touristId])
 
     function handleCheckLocation() {
@@ -68,16 +59,14 @@ export default function TouristDashboard() {
                     setCheckResult(result)
                 } catch {
                     setCheckResult({ insideAnyZone: false, matchedZones: [], error: true })
-                } finally {
-                    setChecking(false)
-                }
+                } finally { setChecking(false) }
             },
             () => { setChecking(false); alert('Could not get your location. Check browser location permissions.') }
         )
     }
 
     function handleSos() {
-        if (!navigator.geolocation) { alert('Geolocation is not supported by this browser.'); return }
+        if (!navigator.geolocation) { alert('Geolocation is not supported.'); return }
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const { latitude, longitude } = pos.coords
@@ -90,68 +79,213 @@ export default function TouristDashboard() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
-            <div className="glass-panel rounded-xl p-5 md:col-span-2">
-                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                    <h2 className="font-bold text-sm tracking-wider uppercase text-slate-300">🗺️ Live Map</h2>
-                    <div className="flex gap-2">
-                        <AddZoneForm onCreated={loadZones} />
-                        <button onClick={handleCheckLocation} disabled={checking}
-                                className="text-sm bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 text-white rounded-lg px-4 py-2 disabled:opacity-50 transition-all duration-200 shadow-md shadow-cyan-500/15 font-medium">
-                            {checking ? (
-                                <span className="flex items-center gap-2">
-                                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    Checking...
-                                </span>
-                            ) : '📍 Check My Location'}
-                        </button>
+        <div style={{ paddingTop: '1.5rem', paddingBottom: '3rem' }}>
+            {/* Welcome banner */}
+            <div className="animate-fade-in-up" style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div>
+                        <h1 style={{
+                            fontSize: '1.5rem',
+                            fontWeight: 800,
+                            letterSpacing: '-0.02em',
+                            margin: 0,
+                            background: 'linear-gradient(135deg, #f0f4ff 0%, #8ba3c7 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            fontFamily: "'Outfit', sans-serif",
+                        }}>
+                            Tourist Dashboard
+                        </h1>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.825rem', marginTop: '0.2rem' }}>
+                            Your real-time safety overview
+                        </p>
+                    </div>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '9999px',
+                        background: position
+                            ? 'rgba(52, 211, 153, 0.08)'
+                            : 'rgba(251, 191, 36, 0.08)',
+                        border: `1px solid ${position ? 'rgba(52,211,153,0.2)' : 'rgba(251,191,36,0.2)'}`,
+                    }}>
+                        <span style={{
+                            width: '7px', height: '7px',
+                            borderRadius: '50%',
+                            background: position ? 'var(--accent-emerald)' : 'var(--accent-amber)',
+                            boxShadow: position ? '0 0 8px rgba(52,211,153,0.8)' : '0 0 8px rgba(251,191,36,0.8)',
+                            animation: 'dotPulse 2s ease-in-out infinite',
+                            flexShrink: 0,
+                        }} />
+                        <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: position ? 'var(--accent-emerald)' : 'var(--accent-amber)',
+                        }}>
+                            {position ? `Tracking · every ${LOCATION_PUSH_INTERVAL_MS / 1000}s` : 'Waiting for GPS...'}
+                        </span>
                     </div>
                 </div>
-                <div className="h-80 rounded-lg overflow-hidden border border-slate-800/60">
-                    <ZoneMap zones={zones} position={position} />
-                </div>
-                {checkResult && (
-                    <div className={`mt-3 text-sm px-4 py-2.5 rounded-lg ${checkResult.insideAnyZone
-                        ? 'bg-rose-500/10 border border-rose-500/20 text-rose-300 font-medium'
-                        : 'bg-slate-800/50 border border-slate-700/50 text-slate-400'}`}>
-                        {checkResult.error ? '⚠ Location check failed.' :
-                            checkResult.insideAnyZone ? `⚠️ Inside ${checkResult.matchedZones.length} risk zone(s): ${checkResult.matchedZones.map(z => `${z.zoneName} (${z.riskLevel})`).join(', ')}` :
-                                '✓ No risk zones at this location.'}
-                    </div>
-                )}
-                <p className="mt-3 text-xs text-slate-500 flex items-center gap-1.5">
-                    {position ? (
-                        <>
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Live tracking active — pushing location every {LOCATION_PUSH_INTERVAL_MS / 1000}s
-                        </>
-                    ) : (
-                        <>
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                            Waiting for location...
-                        </>
-                    )}
-                </p>
             </div>
-            <div className="flex flex-col gap-4">
-                {loading ? (
-                    <div className="glass-panel rounded-xl p-5">
-                        <div className="flex items-center gap-2 text-sm text-slate-500">
-                            <span className="w-3.5 h-3.5 border-2 border-slate-600 border-t-cyan-400 rounded-full animate-spin"></span>
-                            Loading Digital ID...
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
+                    {/* Map Panel */}
+                    <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <div style={{
+                                    width: '32px', height: '32px',
+                                    borderRadius: '8px',
+                                    background: 'rgba(56,189,248,0.1)',
+                                    border: '1px solid rgba(56,189,248,0.18)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '14px',
+                                }}>🗺️</div>
+                                <div>
+                                    <h2 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Live Safety Map</h2>
+                                    <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>Real-time zone tracking</p>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <AddZoneForm onCreated={loadZones} />
+                                <button
+                                    onClick={handleCheckLocation}
+                                    disabled={checking}
+                                    id="check-location-btn"
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: 'var(--radius-sm)',
+                                        fontSize: '0.825rem',
+                                        fontWeight: 600,
+                                        color: '#04060d',
+                                        background: 'linear-gradient(135deg, #38bdf8, #60a5fa)',
+                                        border: 'none',
+                                        cursor: checking ? 'wait' : 'pointer',
+                                        opacity: checking ? 0.7 : 1,
+                                        transition: 'all 0.25s',
+                                        boxShadow: '0 2px 12px rgba(56,189,248,0.25)',
+                                        fontFamily: "'Inter', sans-serif",
+                                    }}
+                                >
+                                    {checking ? (
+                                        <>
+                                            <span style={{
+                                                width: '12px', height: '12px',
+                                                border: '2px solid rgba(4,6,13,0.3)',
+                                                borderTopColor: '#04060d',
+                                                borderRadius: '50%',
+                                                display: 'inline-block',
+                                                animation: 'spin 0.8s linear infinite',
+                                            }} />
+                                            Checking...
+                                        </>
+                                    ) : (
+                                        <>📍 Check Location</>
+                                    )}
+                                </button>
+                            </div>
                         </div>
+
+                        <div style={{ height: '340px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+                            <ZoneMap zones={zones} position={position} />
+                        </div>
+
+                        {checkResult && (
+                            <div className="animate-slide-down" style={{
+                                marginTop: '0.875rem',
+                                padding: '0.75rem 1rem',
+                                borderRadius: '10px',
+                                background: checkResult.insideAnyZone
+                                    ? 'rgba(248, 113, 113, 0.08)'
+                                    : 'rgba(52, 211, 153, 0.06)',
+                                border: `1px solid ${checkResult.insideAnyZone ? 'rgba(248,113,113,0.2)' : 'rgba(52,211,153,0.15)'}`,
+                                color: checkResult.insideAnyZone ? 'var(--accent-rose)' : 'var(--accent-emerald)',
+                                fontSize: '0.825rem',
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '0.5rem',
+                            }}>
+                                <span>{checkResult.insideAnyZone ? '⚠️' : '✅'}</span>
+                                <span>
+                                    {checkResult.error ? 'Location check failed.' :
+                                        checkResult.insideAnyZone
+                                            ? `Inside ${checkResult.matchedZones.length} risk zone(s): ${checkResult.matchedZones.map(z => `${z.zoneName} (${z.riskLevel})`).join(', ')}`
+                                            : 'No risk zones at your current location. You are safe.'}
+                                </span>
+                            </div>
+                        )}
                     </div>
-                ) : <DigitalIdCard digitalId={digitalId} />}
-                <SafetyScoreCard />
-                <button onClick={handleSos}
-                        className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl shadow-lg p-5 font-bold text-lg transition-all duration-300 animate-sos-pulse">
-                    🆘 SOS — Emergency Alert
-                </button>
-                {sosSent && (
-                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-4 py-2 text-sm text-rose-400 text-center -mt-2">
-                        ✓ SOS sent — authorities have been notified
+
+                    {/* Right sidebar */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {loading ? (
+                            <div className="glass-card" style={{ padding: '1.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <span style={{
+                                        width: '16px', height: '16px',
+                                        border: '2px solid var(--border-dim)',
+                                        borderTopColor: 'var(--accent-cyan)',
+                                        borderRadius: '50%',
+                                        display: 'inline-block',
+                                        animation: 'spin 0.8s linear infinite',
+                                    }} />
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading Digital ID...</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <DigitalIdCard digitalId={digitalId} />
+                        )}
+                        <SafetyScoreCard />
+
+                        {/* SOS Button */}
+                        <button
+                            onClick={handleSos}
+                            id="sos-btn"
+                            className="animate-sos-pulse"
+                            style={{
+                                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%)',
+                                color: 'white',
+                                border: '1px solid rgba(239, 68, 68, 0.4)',
+                                borderRadius: '14px',
+                                padding: '1.25rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                transition: 'all 0.3s',
+                                fontFamily: "'Outfit', sans-serif",
+                            }}
+                        >
+                            <span style={{ fontSize: '1.75rem', lineHeight: 1 }}>🆘</span>
+                            <span style={{ fontWeight: 800, fontSize: '1rem', letterSpacing: '-0.01em' }}>SOS Emergency</span>
+                            <span style={{ fontSize: '0.7rem', opacity: 0.7, fontWeight: 500 }}>Tap to alert authorities</span>
+                        </button>
+
+                        {sosSent && (
+                            <div className="animate-slide-down" style={{
+                                padding: '0.75rem 1rem',
+                                borderRadius: '10px',
+                                background: 'rgba(52, 211, 153, 0.08)',
+                                border: '1px solid rgba(52, 211, 153, 0.2)',
+                                color: 'var(--accent-emerald)',
+                                fontSize: '0.825rem',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                textAlign: 'center',
+                                justifyContent: 'center',
+                            }}>
+                                ✓ SOS sent — authorities have been notified
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </div>
     )

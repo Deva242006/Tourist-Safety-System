@@ -11,10 +11,17 @@ import IncidentDetailModal from '../components/IncidentDetailModal.jsx'
 import FileEfirForm from '../components/FileEfirForm.jsx'
 
 const SEVERITY_STYLE = {
-    CRITICAL: 'bg-rose-500/10 text-rose-300 border-rose-500/30',
-    HIGH: 'bg-rose-500/8 text-rose-300 border-rose-500/20',
-    MEDIUM: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
-    LOW: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
+    CRITICAL: { bg: 'rgba(239,68,68,0.07)', text: '#f87171', border: 'rgba(239,68,68,0.22)', leftBorder: '#ef4444', icon: '🆘' },
+    HIGH:     { bg: 'rgba(249,115,22,0.07)', text: '#fb923c', border: 'rgba(249,115,22,0.22)', leftBorder: '#f97316', icon: '⚠️' },
+    MEDIUM:   { bg: 'rgba(234,179,8,0.07)',  text: '#fbbf24', border: 'rgba(234,179,8,0.22)',  leftBorder: '#eab308', icon: '🔶' },
+    LOW:      { bg: 'rgba(34,197,94,0.06)',  text: '#34d399', border: 'rgba(34,197,94,0.18)',  leftBorder: '#22c55e', icon: '🟢' },
+}
+
+const ALERT_TYPES = {
+    SOS: '🆘 SOS Alert',
+    GEOFENCE: '📍 Geofence Breach',
+    ROUTE_DEVIATION: '🚨 Route Deviation',
+    INACTIVITY: '⏱️ Inactivity',
 }
 
 function timeAgo(iso) {
@@ -22,6 +29,31 @@ function timeAgo(iso) {
     if (seconds < 60) return `${seconds}s ago`
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
     return `${Math.floor(seconds / 3600)}h ago`
+}
+
+function StatCard({ label, value, color, icon, glow }) {
+    return (
+        <div className="stat-card" style={{ textAlign: 'center' }}>
+            <div style={{
+                width: '40px', height: '40px',
+                borderRadius: '10px',
+                background: `${color}14`,
+                border: `1px solid ${color}28`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '18px',
+                margin: '0 auto 0.75rem',
+                boxShadow: glow,
+            }}>
+                {icon}
+            </div>
+            <p style={{ fontSize: '2rem', fontWeight: 900, margin: 0, color, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                {value}
+            </p>
+            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
+                {label}
+            </p>
+        </div>
+    )
 }
 
 export default function AdminDashboard() {
@@ -64,85 +96,201 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="flex flex-col gap-5 mt-6">
-            {/* Stats Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="glass-panel rounded-xl p-4 text-center">
-                    <p className="text-2xl font-extrabold text-cyan-400">{markers.length}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider mt-1">Live Tourists</p>
-                </div>
-                <div className="glass-panel rounded-xl p-4 text-center">
-                    <p className="text-2xl font-extrabold text-amber-400">{alerts.length}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider mt-1">Active Alerts</p>
-                </div>
-                <div className="glass-panel rounded-xl p-4 text-center">
-                    <p className="text-2xl font-extrabold text-indigo-400">{touristList.length}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider mt-1">Registered</p>
-                </div>
-                <div className="glass-panel rounded-xl p-4 text-center">
-                    <p className="text-2xl font-extrabold text-emerald-400">{incidents.length}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wider mt-1">E-FIR Cases</p>
-                </div>
+        <div style={{ paddingTop: '1.5rem', paddingBottom: '3rem' }}>
+            {/* Page header */}
+            <div className="animate-fade-in-up" style={{ marginBottom: '1.5rem' }}>
+                <h1 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                    margin: 0,
+                    background: 'linear-gradient(135deg, #f0f4ff 0%, #8ba3c7 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontFamily: "'Outfit', sans-serif",
+                }}>
+                    Command Center
+                </h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.825rem', marginTop: '0.2rem' }}>
+                    Real-time tourist safety monitoring & incident management
+                </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="glass-panel rounded-xl p-5 md:col-span-2">
-                    <div className="flex items-center justify-between mb-3">
-                        <h2 className="font-bold text-sm tracking-wider uppercase text-slate-300">🗺️ Tourist Heatmap</h2>
-                        <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
-                            {markers.length} tourist(s) live
-                        </span>
+            {/* Stats Row */}
+            <div className="animate-fade-in-up" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
+                <StatCard label="Live Tourists" value={markers.length} color="#38bdf8" icon="📡" glow="0 0 12px rgba(56,189,248,0.2)" />
+                <StatCard label="Active Alerts" value={alerts.length} color="#fbbf24" icon="🚨" glow="0 0 12px rgba(251,191,36,0.2)" />
+                <StatCard label="Registered" value={touristList.length} color="#818cf8" icon="👥" glow="0 0 12px rgba(129,140,248,0.2)" />
+                <StatCard label="E-FIR Cases" value={incidents.length} color="#34d399" icon="📋" glow="0 0 12px rgba(52,211,153,0.2)" />
+            </div>
+
+            {/* Map + Alert Feed Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                {/* Map */}
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <div style={{
+                                width: '32px', height: '32px',
+                                borderRadius: '8px',
+                                background: 'rgba(56,189,248,0.1)',
+                                border: '1px solid rgba(56,189,248,0.18)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '14px',
+                            }}>🗺️</div>
+                            <div>
+                                <h2 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Tourist Heatmap</h2>
+                                <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>Live location tracking</p>
+                            </div>
+                        </div>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '0.4rem',
+                            padding: '0.3rem 0.75rem',
+                            borderRadius: '9999px',
+                            background: markers.length > 0 ? 'rgba(56,189,248,0.08)' : 'rgba(148,163,184,0.06)',
+                            border: `1px solid ${markers.length > 0 ? 'rgba(56,189,248,0.2)' : 'var(--border-subtle)'}`,
+                        }}>
+                            <span style={{
+                                width: '6px', height: '6px', borderRadius: '50%',
+                                background: markers.length > 0 ? 'var(--accent-cyan)' : 'var(--text-muted)',
+                                boxShadow: markers.length > 0 ? '0 0 6px rgba(56,189,248,0.8)' : 'none',
+                                animation: markers.length > 0 ? 'dotPulse 2s infinite' : 'none',
+                            }} />
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: markers.length > 0 ? 'var(--accent-cyan)' : 'var(--text-muted)' }}>
+                                {markers.length} tourist{markers.length !== 1 ? 's' : ''} live
+                            </span>
+                        </div>
                     </div>
-                    <div className="h-80 rounded-lg overflow-hidden border border-slate-800/60">
+                    <div style={{ height: '340px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
                         <ZoneMap zones={zones} markers={markers} />
                     </div>
                 </div>
 
-                <div className="glass-panel rounded-xl p-5 flex flex-col">
-                    <h2 className="font-bold text-sm tracking-wider uppercase text-slate-300 mb-3">🚨 Alert Feed</h2>
-                    {alerts.length === 0 ? (
-                        <p className="text-sm text-slate-500">No alerts yet.</p>
-                    ) : (
-                        <div className="flex flex-col gap-2 overflow-y-auto max-h-96 pr-1">
-                            {alerts.map((a, i) => (
-                                <div key={a.id || i} className={`border rounded-lg p-3 text-sm ${SEVERITY_STYLE[a.severity] || 'bg-slate-800/30 text-slate-400 border-slate-700/40'}`}>
-                                    <div className="flex justify-between items-start gap-2">
-                                        <span className="font-semibold">
-                                            {a.type === 'SOS' ? '🆘 SOS' : a.type === 'GEOFENCE' ? '⚠️ Geofence' : a.type === 'ROUTE_DEVIATION' ? '🚨 Route Deviation' : a.type === 'INACTIVITY' ? '⏱️ Inactivity' : a.type}
-                                        </span>
-                                        <span className="text-xs opacity-60">{timeAgo(a.createdAt)}</span>
-                                    </div>
-                                    <p className="mt-1 text-xs opacity-80">{a.message}</p>
-                                    <p className="text-xs opacity-50 mt-1 font-mono">Tourist: {String(a.touristId).slice(0, 8)}... · {a.severity}</p>
+                {/* Alert Feed */}
+                <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                        <div style={{
+                            width: '32px', height: '32px',
+                            borderRadius: '8px',
+                            background: 'rgba(248,113,113,0.1)',
+                            border: '1px solid rgba(248,113,113,0.18)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '14px',
+                        }}>🚨</div>
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Alert Feed</h2>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>Live safety incidents</p>
+                        </div>
+                    </div>
 
-                                    {a.status === 'OPEN' && a.id && efirTargetAlertId !== a.id && (
-                                        <button onClick={() => setEfirTargetAlertId(a.id)}
-                                                className="mt-2 text-xs bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700/50 rounded-md px-3 py-1.5 transition-colors">
-                                            File E-FIR
-                                        </button>
-                                    )}
-                                    {a.status === 'OPEN' && !a.id && (
-                                        <p className="mt-2 text-xs italic opacity-40">Refresh the page to file an E-FIR for this alert</p>
-                                    )}
-                                    {efirTargetAlertId === a.id && (
-                                        <FileEfirForm alertId={a.id} onFiled={handleIncidentFiled} onCancel={() => setEfirTargetAlertId(null)} />
-                                    )}
-                                </div>
-                            ))}
+                    {alerts.length === 0 ? (
+                        <div style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--text-muted)',
+                            gap: '0.5rem',
+                        }}>
+                            <span style={{ fontSize: '2rem' }}>✅</span>
+                            <p style={{ margin: 0, fontSize: '0.825rem', fontWeight: 500 }}>No active alerts</p>
+                            <p style={{ margin: 0, fontSize: '0.725rem' }}>All tourists are safe</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', overflowY: 'auto', maxHeight: '320px', paddingRight: '2px' }}>
+                            {alerts.map((a, i) => {
+                                const sev = SEVERITY_STYLE[a.severity] || SEVERITY_STYLE.LOW
+                                return (
+                                    <div key={a.id || i} style={{
+                                        background: sev.bg,
+                                        border: `1px solid ${sev.border}`,
+                                        borderLeft: `3px solid ${sev.leftBorder}`,
+                                        borderRadius: '10px',
+                                        padding: '0.75rem',
+                                        transition: 'all 0.2s',
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: sev.text }}>
+                                                {ALERT_TYPES[a.type] || a.type}
+                                            </span>
+                                            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', flexShrink: 0 }}>{timeAgo(a.createdAt)}</span>
+                                        </div>
+                                        <p style={{ margin: '0 0 0.3rem', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{a.message}</p>
+                                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+                                            ID: {String(a.touristId).slice(0, 8)}... · <span style={{ color: sev.text }}>{a.severity}</span>
+                                        </p>
+                                        {a.status === 'OPEN' && a.id && efirTargetAlertId !== a.id && (
+                                            <button
+                                                onClick={() => setEfirTargetAlertId(a.id)}
+                                                style={{
+                                                    marginTop: '0.6rem',
+                                                    padding: '0.3rem 0.75rem',
+                                                    fontSize: '0.72rem',
+                                                    fontWeight: 700,
+                                                    color: 'var(--accent-cyan)',
+                                                    background: 'rgba(56,189,248,0.08)',
+                                                    border: '1px solid rgba(56,189,248,0.2)',
+                                                    borderRadius: '6px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    fontFamily: "'Inter', sans-serif",
+                                                    letterSpacing: '0.03em',
+                                                }}
+                                            >
+                                                📄 File E-FIR
+                                            </button>
+                                        )}
+                                        {a.status === 'OPEN' && !a.id && (
+                                            <p style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>Refresh to file E-FIR</p>
+                                        )}
+                                        {efirTargetAlertId === a.id && (
+                                            <FileEfirForm alertId={a.id} onFiled={handleIncidentFiled} onCancel={() => setEfirTargetAlertId(null)} />
+                                        )}
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="glass-panel rounded-xl p-5 md:col-span-2">
-                    <h2 className="font-bold text-sm tracking-wider uppercase text-slate-300 mb-3">👥 Registered Tourists</h2>
+            {/* Tourists + Incidents Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                        <div style={{
+                            width: '32px', height: '32px',
+                            borderRadius: '8px',
+                            background: 'rgba(129,140,248,0.1)',
+                            border: '1px solid rgba(129,140,248,0.18)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '14px',
+                        }}>👥</div>
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Registered Tourists</h2>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>{touristList.length} tourists on record</p>
+                        </div>
+                    </div>
                     <TouristTable tourists={touristList} />
                 </div>
 
-                <div className="glass-panel rounded-xl p-5">
-                    <h2 className="font-bold text-sm tracking-wider uppercase text-slate-300 mb-3">📋 Filed Incidents (E-FIR)</h2>
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                        <div style={{
+                            width: '32px', height: '32px',
+                            borderRadius: '8px',
+                            background: 'rgba(52,211,153,0.1)',
+                            border: '1px solid rgba(52,211,153,0.18)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '14px',
+                        }}>📋</div>
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Filed Incidents (E-FIR)</h2>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>{incidents.length} case{incidents.length !== 1 ? 's' : ''} filed</p>
+                        </div>
+                    </div>
                     <IncidentPanel incidents={incidents} onSelect={setSelectedIncidentId} />
                 </div>
             </div>

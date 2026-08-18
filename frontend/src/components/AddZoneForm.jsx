@@ -38,30 +38,65 @@ export default function AddZoneForm({ onCreated }) {
     }
 
     if (!open) {
-        return <button onClick={() => setOpen(true)} className="text-sm bg-slate-100 hover:bg-slate-200 rounded px-3 py-2">+ Add Risk Zone (Demo)</button>
+        return (
+            <button onClick={() => setOpen(true)}
+                    className="text-sm bg-slate-800/70 hover:bg-slate-700/70 border border-slate-700/50 hover:border-slate-600/60 text-slate-300 hover:text-slate-100 rounded-lg px-3 py-2 transition-all duration-200">
+                + Add Risk Zone
+            </button>
+        )
     }
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-4 flex flex-col gap-2 text-sm">
-            <h3 className="font-semibold">New Risk Zone</h3>
-            {error && <p className="text-red-600">{error}</p>}
-            <input className="border rounded px-2 py-1" placeholder="Zone name" value={form.name} onChange={update('name')} required />
-            <select className="border rounded px-2 py-1" value={form.riskLevel} onChange={update('riskLevel')}>
-                <option value="LOW">Low risk</option>
-                <option value="MEDIUM">Medium risk</option>
-                <option value="HIGH">High risk</option>
-            </select>
-            <input className="border rounded px-2 py-1" placeholder="Description" value={form.description} onChange={update('description')} />
-            <p className="text-xs text-slate-400">Rectangle corners (decimal lat/lng):</p>
-            <div className="grid grid-cols-2 gap-2">
-                <input className="border rounded px-2 py-1" placeholder="SW corner lat" value={form.swLat} onChange={update('swLat')} required />
-                <input className="border rounded px-2 py-1" placeholder="SW corner lng" value={form.swLng} onChange={update('swLng')} required />
-                <input className="border rounded px-2 py-1" placeholder="NE corner lat" value={form.neLat} onChange={update('neLat')} required />
-                <input className="border rounded px-2 py-1" placeholder="NE corner lng" value={form.neLng} onChange={update('neLng')} required />
+        <form onSubmit={handleSubmit} className="glass-panel rounded-xl p-5 flex flex-col gap-3 text-sm shadow-xl">
+            <h3 className="font-bold text-sm tracking-wider uppercase text-slate-300">🗺️ New Risk Zone</h3>
+            {error && (
+                <p className="text-rose-400 text-xs bg-rose-500/10 border border-rose-500/20 rounded-md px-3 py-2">{error}</p>
+            )}
+            <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-slate-400 tracking-wide uppercase">Zone Name</label>
+                <input className="glass-input rounded-lg px-3 py-2 text-sm placeholder-slate-500"
+                       placeholder="e.g. High Risk Zone Alpha" value={form.name} onChange={update('name')} required />
             </div>
-            <div className="flex gap-2">
-                <button type="submit" disabled={loading} className="bg-slate-900 text-white rounded px-3 py-2 flex-1 disabled:opacity-50">{loading ? 'Creating...' : 'Create Zone'}</button>
-                <button type="button" onClick={() => setOpen(false)} className="px-3 py-2">Cancel</button>
+            <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-slate-400 tracking-wide uppercase">Risk Level</label>
+                <select className="glass-input rounded-lg px-3 py-2 text-sm" value={form.riskLevel} onChange={update('riskLevel')}>
+                    <option value="LOW">Low Risk</option>
+                    <option value="MEDIUM">Medium Risk</option>
+                    <option value="HIGH">High Risk</option>
+                </select>
+            </div>
+            <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-slate-400 tracking-wide uppercase">Description</label>
+                <input className="glass-input rounded-lg px-3 py-2 text-sm placeholder-slate-500"
+                       placeholder="Brief description..." value={form.description} onChange={update('description')} />
+            </div>
+            <div className="flex flex-col gap-1">
+                <p className="text-xs font-medium text-slate-400 tracking-wide uppercase">Rectangle Corners (decimal lat/lng)</p>
+                <div className="grid grid-cols-2 gap-2">
+                    <input className="glass-input rounded-lg px-3 py-2 text-sm placeholder-slate-500"
+                           placeholder="SW lat" value={form.swLat} onChange={update('swLat')} required />
+                    <input className="glass-input rounded-lg px-3 py-2 text-sm placeholder-slate-500"
+                           placeholder="SW lng" value={form.swLng} onChange={update('swLng')} required />
+                    <input className="glass-input rounded-lg px-3 py-2 text-sm placeholder-slate-500"
+                           placeholder="NE lat" value={form.neLat} onChange={update('neLat')} required />
+                    <input className="glass-input rounded-lg px-3 py-2 text-sm placeholder-slate-500"
+                           placeholder="NE lng" value={form.neLng} onChange={update('neLng')} required />
+                </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+                <button type="submit" disabled={loading}
+                        className="bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 text-white rounded-lg px-4 py-2 flex-1 disabled:opacity-50 transition-all duration-200 font-medium text-sm">
+                    {loading ? (
+                        <span className="flex items-center justify-center gap-2">
+                            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            Creating...
+                        </span>
+                    ) : 'Create Zone'}
+                </button>
+                <button type="button" onClick={() => setOpen(false)}
+                        className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-lg transition-colors">
+                    Cancel
+                </button>
             </div>
         </form>
     )

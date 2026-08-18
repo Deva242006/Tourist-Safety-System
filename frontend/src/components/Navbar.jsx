@@ -12,61 +12,164 @@ export default function Navbar() {
     }
 
     return (
-        <nav className="sticky top-0 z-[999] border-b px-6 py-3.5 flex items-center justify-between" style={{
-            background: 'rgba(6, 9, 15, 0.8)',
-            backdropFilter: 'blur(20px) saturate(1.6)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-            borderColor: 'var(--border-subtle)'
-        }}>
-            <Link to="/" className="flex items-center gap-2.5 no-underline group" id="nav-home">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{
-                    background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.15) 0%, rgba(129, 140, 248, 0.15) 100%)',
-                    border: '1px solid rgba(34, 211, 238, 0.2)'
-                }}>
-                    🛡️
-                </div>
-                <span className="gradient-text font-extrabold text-lg tracking-tight">
-                    SafeGuard
-                </span>
-            </Link>
-            <div className="flex items-center gap-2">
-                {session ? (
-                    <>
-                        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs" style={{
-                            background: 'rgba(15, 23, 42, 0.6)',
-                            border: '1px solid var(--border-subtle)'
+        <nav
+            id="main-navbar"
+            style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 999,
+                background: 'rgba(4, 6, 13, 0.85)',
+                backdropFilter: 'blur(24px) saturate(1.8)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
+                borderBottom: '1px solid rgba(148, 163, 184, 0.07)',
+                boxShadow: '0 1px 0 rgba(255,255,255,0.03)',
+            }}
+        >
+            <div style={{
+                maxWidth: '1200px',
+                margin: '0 auto',
+                padding: '0 1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                height: '60px',
+            }}>
+                {/* Logo */}
+                <Link to="/" className="no-underline" id="nav-home" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(129, 140, 248, 0.18) 100%)',
+                        border: '1px solid rgba(56, 189, 248, 0.22)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '18px',
+                        boxShadow: '0 0 16px rgba(56,189,248,0.12)',
+                        flexShrink: 0,
+                    }}>
+                        🛡️
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                        <span style={{
+                            background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #a78bfa 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            fontWeight: 800,
+                            fontSize: '1.1rem',
+                            letterSpacing: '-0.02em',
+                            fontFamily: "'Outfit', sans-serif",
                         }}>
-                            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent-emerald)' }} />
-                            <span style={{ color: 'var(--text-muted)' }}>Hi,</span>
-                            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{session.fullName}</span>
-                        </div>
-                        <NavLink to="/tourist" id="nav-tourist">Tourist</NavLink>
-                        <NavLink to="/admin" id="nav-admin">Admin</NavLink>
-                        <button
-                            onClick={handleLogout}
-                            id="nav-logout"
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-                            style={{
-                                color: 'var(--accent-rose)',
-                                background: 'transparent'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.background = 'rgba(251, 113, 133, 0.1)'
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.background = 'transparent'
-                            }}
-                        >
-                            Logout
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <NavLink to="/login" id="nav-login">Login</NavLink>
-                        <NavLink to="/register" id="nav-register">Register</NavLink>
-                        <NavLink to="/admin" id="nav-admin-public">Admin</NavLink>
-                    </>
-                )}
+                            SafeGuard
+                        </span>
+                        <span style={{
+                            fontSize: '0.6rem',
+                            color: 'var(--text-muted)',
+                            letterSpacing: '0.12em',
+                            textTransform: 'uppercase',
+                            fontWeight: 600,
+                        }}>
+                            Tourist Safety
+                        </span>
+                    </div>
+                </Link>
+
+                {/* Right Nav */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {session ? (
+                        <>
+                            {/* User chip */}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '9999px',
+                                background: 'rgba(56, 189, 248, 0.06)',
+                                border: '1px solid rgba(56, 189, 248, 0.12)',
+                                marginRight: '0.25rem',
+                            }}>
+                                <span style={{
+                                    width: '6px',
+                                    height: '6px',
+                                    borderRadius: '50%',
+                                    background: 'var(--accent-emerald)',
+                                    boxShadow: '0 0 6px rgba(52,211,153,0.8)',
+                                    flexShrink: 0,
+                                    animation: 'dotPulse 2s ease-in-out infinite',
+                                }} />
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Hi,</span>
+                                <span style={{ color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 600, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {session.fullName}
+                                </span>
+                            </div>
+                            <NavLink to="/tourist" id="nav-tourist">Tourist</NavLink>
+                            <NavLink to="/admin" id="nav-admin">Admin</NavLink>
+                            <button
+                                onClick={handleLogout}
+                                id="nav-logout"
+                                style={{
+                                    padding: '0.4rem 0.875rem',
+                                    borderRadius: 'var(--radius-sm)',
+                                    fontSize: '0.825rem',
+                                    fontWeight: 600,
+                                    color: 'var(--accent-rose)',
+                                    background: 'transparent',
+                                    border: '1px solid rgba(248, 113, 113, 0.12)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.25s',
+                                    fontFamily: "'Inter', sans-serif",
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)'
+                                    e.currentTarget.style.borderColor = 'rgba(248, 113, 113, 0.3)'
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'transparent'
+                                    e.currentTarget.style.borderColor = 'rgba(248, 113, 113, 0.12)'
+                                }}
+                            >
+                                Logout
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <NavLink to="/login" id="nav-login">Login</NavLink>
+                            <Link
+                                to="/register"
+                                id="nav-register"
+                                className="no-underline"
+                                style={{
+                                    padding: '0.4rem 0.875rem',
+                                    borderRadius: 'var(--radius-sm)',
+                                    fontSize: '0.825rem',
+                                    fontWeight: 700,
+                                    color: '#04060d',
+                                    background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.25s',
+                                    boxShadow: '0 2px 12px rgba(56,189,248,0.25)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-1px)'
+                                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(56,189,248,0.4)'
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)'
+                                    e.currentTarget.style.boxShadow = '0 2px 12px rgba(56,189,248,0.25)'
+                                }}
+                            >
+                                Register
+                            </Link>
+                            <NavLink to="/admin" id="nav-admin-public">Admin</NavLink>
+                        </>
+                    )}
+                </div>
             </div>
         </nav>
     )
@@ -80,21 +183,32 @@ function NavLink({ to, children, id }) {
         <Link
             to={to}
             id={id}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 no-underline"
+            className="no-underline"
             style={{
+                padding: '0.4rem 0.875rem',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.825rem',
+                fontWeight: 600,
                 color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                background: isActive ? 'rgba(34, 211, 238, 0.08)' : 'transparent'
+                background: isActive ? 'rgba(56, 189, 248, 0.08)' : 'transparent',
+                border: isActive ? '1px solid rgba(56, 189, 248, 0.15)' : '1px solid transparent',
+                transition: 'all 0.25s',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
             }}
             onMouseEnter={(e) => {
                 if (!isActive) {
-                    e.target.style.color = 'var(--text-primary)'
-                    e.target.style.background = 'rgba(148, 163, 184, 0.08)'
+                    e.currentTarget.style.color = 'var(--text-primary)'
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)'
                 }
             }}
             onMouseLeave={(e) => {
                 if (!isActive) {
-                    e.target.style.color = 'var(--text-secondary)'
-                    e.target.style.background = 'transparent'
+                    e.currentTarget.style.color = 'var(--text-secondary)'
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.borderColor = 'transparent'
                 }
             }}
         >
