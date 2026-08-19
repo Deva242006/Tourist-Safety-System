@@ -81,6 +81,7 @@
 
 	</dependencies>
 	<build>
+		<finalName>Tourist-Safety</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
