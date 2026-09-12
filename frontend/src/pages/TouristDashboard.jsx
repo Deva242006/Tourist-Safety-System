@@ -49,7 +49,9 @@ export default function TouristDashboard() {
                 const { latitude, longitude } = pos.coords
                 setPosition([latitude, longitude])
                 sendLocationUpdate(session.touristId, latitude, longitude)
-            })
+            }, (err) => {
+                console.warn("Location error:", err)
+            }, { enableHighAccuracy: true })
         }
         pushLocation()
         const interval = setInterval(pushLocation, LOCATION_PUSH_INTERVAL_MS)
@@ -70,7 +72,8 @@ export default function TouristDashboard() {
                     setCheckResult({ insideAnyZone: false, matchedZones: [], error: true })
                 } finally { setChecking(false) }
             },
-            () => { setChecking(false); alert('Could not get your location. Check browser location permissions.') }
+            () => { setChecking(false); alert('Could not get your location. Check browser location permissions.') },
+            { enableHighAccuracy: true }
         )
     }
 
@@ -83,7 +86,8 @@ export default function TouristDashboard() {
                 setSosSent(true)
                 setTimeout(() => setSosSent(false), 5000)
             },
-            () => alert('Could not get your location for SOS. Check browser location permissions.')
+            () => alert('Could not get your location for SOS. Check browser location permissions.'),
+            { enableHighAccuracy: true }
         )
     }
 
@@ -135,6 +139,11 @@ export default function TouristDashboard() {
                             {position ? `Tracking · every ${LOCATION_PUSH_INTERVAL_MS / 1000}s` : 'Waiting for GPS...'}
                         </span>
                     </div>
+                    <button onClick={() => navigate('/tourist/profile')} style={{
+                        padding: '0.5rem 1rem', borderRadius: '8px', background: 'transparent', border: '1px solid var(--border-dim)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                    }}>
+                        👤 My Profile
+                    </button>
                 </div>
             </div>
 

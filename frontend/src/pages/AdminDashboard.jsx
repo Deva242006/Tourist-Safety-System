@@ -5,7 +5,7 @@ import { getTourists } from '../api/tourists'
 import { getIncidents } from '../api/incidents'
 import { getOfficers } from '../api/officers'
 import { connectSocket, disconnectSocket } from '../api/socket'
-import ZoneMap from '../components/ZoneMap.jsx'
+import LiveMap from '../components/LiveMap.jsx'
 import TouristTable from '../components/TouristTable.jsx'
 import IncidentPanel from '../components/IncidentPanel.jsx'
 import IncidentDetailModal from '../components/IncidentDetailModal.jsx'
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                     <div style={{ height: '340px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-                        <ZoneMap zones={zones} markers={markers} />
+                        <LiveMap zones={zones} markers={markers} />
                     </div>
                 </div>
 

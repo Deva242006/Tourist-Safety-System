@@ -41,9 +41,12 @@ public class Alert {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    private boolean isRead;
+
     @PrePersist
     void onCreate() {
         this.createdAt = Instant.now();
         if (this.status == null) this.status = "OPEN";
+        this.isRead = false;
     }
 }

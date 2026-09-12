@@ -39,4 +39,21 @@ public class TouristController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @org.springframework.web.bind.annotation.PatchMapping("/me/contact")
+    public ResponseEntity<?> updateContact(java.security.Principal principal, 
+            @org.springframework.web.bind.annotation.RequestBody com.example.TouristSafety.dto.UpdateContactRequest request) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        UUID touristId = UUID.fromString(principal.getName());
+        return touristRepository.findById(touristId).map(t -> {
+            if (request.getEmergencyContactName() != null) {
+                t.setEmergencyContactName(request.getEmergencyContactName());
+            }
+            if (request.getEmergencyContactPhone() != null) {
+                t.setEmergencyContactPhone(request.getEmergencyContactPhone());
+            }
+            touristRepository.save(t);
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.notFound().build());
+    }
 }

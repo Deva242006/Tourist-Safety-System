@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { getSession, clearSession } from '../api/auth'
 import { getOfficerSession, clearOfficerSession } from '../api/officers'
+import NotificationBell from './NotificationBell.jsx'
 
 export default function Navbar() {
     const navigate = useNavigate()
@@ -85,6 +86,7 @@ export default function Navbar() {
 
                 {/* Right Nav */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {(session || officerSession) && <NotificationBell />}
                     {officerSession ? (
                         <>
                             <div style={{

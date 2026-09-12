@@ -19,10 +19,26 @@ public class AlertController {
     }
 
     @GetMapping
-    public List<Alert> listRecent() {
-        return alertRepository.findAll().stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
-                .limit(50)
-                .toList();
+    public List<Alert> listRecent(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String status,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size
+    ) {
+        java.util.stream.Stream<Alert> stream = alertRepository.findAll().stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+        
+        if (status != null) {
+            stream = stream.filter(a -> status.equals(a.getStatus()));
+        }
+        
+        return stream.limit(size).toList();
+    }
+
+    @org.springframework.web.bind.annotation.PatchMapping("/{id}/read")
+    public org.springframework.http.ResponseEntity<?> markRead(@org.springframework.web.bind.annotation.PathVariable java.util.UUID id) {
+        return alertRepository.findById(id).map(alert -> {
+            alert.setRead(true);
+            alertRepository.save(alert);
+            return org.springframework.http.ResponseEntity.ok().build();
+        }).orElse(org.springframework.http.ResponseEntity.notFound().build());
     }
 }
