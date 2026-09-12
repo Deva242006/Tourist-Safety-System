@@ -3,6 +3,7 @@ import { getZones } from '../api/zones'
 import { getRecentAlerts } from '../api/alerts'
 import { getTourists } from '../api/tourists'
 import { getIncidents } from '../api/incidents'
+import { getOfficers } from '../api/officers'
 import { connectSocket, disconnectSocket } from '../api/socket'
 import ZoneMap from '../components/ZoneMap.jsx'
 import TouristTable from '../components/TouristTable.jsx'
@@ -62,6 +63,7 @@ export default function AdminDashboard() {
     const [alerts, setAlerts] = useState([])
     const [touristList, setTouristList] = useState([])
     const [incidents, setIncidents] = useState([])
+    const [officers, setOfficers] = useState([])
     const [efirTargetAlertId, setEfirTargetAlertId] = useState(null)
     const [selectedIncidentId, setSelectedIncidentId] = useState(null)
 
@@ -70,6 +72,7 @@ export default function AdminDashboard() {
         getRecentAlerts().then(setAlerts).catch(() => setAlerts([]))
         getTourists().then(setTouristList).catch(() => setTouristList([]))
         getIncidents().then(setIncidents).catch(() => setIncidents([]))
+        getOfficers().then(setOfficers).catch(() => setOfficers([]))
     }, [])
 
     useEffect(() => {
@@ -293,6 +296,40 @@ export default function AdminDashboard() {
                     </div>
                     <IncidentPanel incidents={incidents} onSelect={setSelectedIncidentId} />
                 </div>
+            </div>
+
+            {/* Officers Section */}
+            <div className="glass-panel animate-fade-in-up" style={{ padding: '1.5rem', marginTop: '1.25rem', animationDelay: '0.2s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>👮</div>
+                    <div>
+                        <h2 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Registered Officers</h2>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>{officers.length} officer{officers.length !== 1 ? 's' : ''} in system</p>
+                    </div>
+                </div>
+                {officers.length === 0 ? (
+                    <div style={{ padding: '2rem', textAlign: 'center' }}>
+                        <span style={{ fontSize: '2rem' }}>👮</span>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.5rem 0 0' }}>No officers registered yet. Officers can self-register at <strong>/officer-login</strong>.</p>
+                    </div>
+                ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                        {officers.map(o => (
+                            <div key={o.id} style={{ padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-subtle)', background: 'rgba(255,255,255,0.02)', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg,rgba(251,191,36,0.15),rgba(251,146,60,0.1))', border: '1px solid rgba(251,191,36,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>👮</div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.fullName}</p>
+                                    <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.email}</p>
+                                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.3rem', flexWrap: 'wrap' }}>
+                                        <span style={{ padding: '0.1rem 0.4rem', borderRadius: '9999px', fontSize: '0.62rem', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', color: '#fbbf24', fontFamily: 'monospace', fontWeight: 700 }}>{o.badgeNumber}</span>
+                                        {o.station && <span style={{ padding: '0.1rem 0.4rem', borderRadius: '9999px', fontSize: '0.62rem', background: 'rgba(56,189,248,0.07)', border: '1px solid rgba(56,189,248,0.15)', color: 'var(--accent-cyan)' }}>{o.station}</span>}
+                                        <span style={{ padding: '0.1rem 0.4rem', borderRadius: '9999px', fontSize: '0.62rem', background: 'rgba(129,140,248,0.07)', border: '1px solid rgba(129,140,248,0.15)', color: '#818cf8' }}>{o.role}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {selectedIncidentId && (

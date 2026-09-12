@@ -3,6 +3,8 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import TouristDashboard from './pages/TouristDashboard.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
+import OfficerLogin from './pages/OfficerLogin.jsx'
+import OfficerDashboard from './pages/OfficerDashboard.jsx'
 import Navbar from './components/Navbar.jsx'
 import GlobalSosButton from './components/GlobalSosButton.jsx'
 
@@ -17,6 +19,8 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/tourist" element={<TouristDashboard />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/officer-login" element={<OfficerLogin />} />
+          <Route path="/officer" element={<OfficerDashboard />} />
         </Routes>
       </main>
       <GlobalSosButton />

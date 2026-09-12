@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { getMyDigitalId, getSession } from '../api/auth'
 import { getZones, checkLocation } from '../api/zones'
 import { connectSocket, disconnectSocket, sendLocationUpdate, sendSos } from '../api/socket'
+import { getMyIncidents } from '../api/incidents'
 import DigitalIdCard from '../components/DigitalIdCard.jsx'
 import ZoneMap from '../components/ZoneMap.jsx'
 import AddZoneForm from '../components/AddZoneForm.jsx'
 import SafetyScoreCard from '../components/SafetyScoreCard.jsx'
+import ChatPanel from '../components/ChatPanel.jsx'
+import GroupPanel from '../components/GroupPanel.jsx'
 
 const LOCATION_PUSH_INTERVAL_MS = 15000
 
@@ -18,6 +21,7 @@ export default function TouristDashboard() {
     const [checkResult, setCheckResult] = useState(null)
     const [checking, setChecking] = useState(false)
     const [sosSent, setSosSent] = useState(false)
+    const [activeIncident, setActiveIncident] = useState(null) // incident with assigned officer for chat
     const navigate = useNavigate()
     const session = getSession()
 
@@ -29,6 +33,11 @@ export default function TouristDashboard() {
         if (!session) { navigate('/login'); return }
         getMyDigitalId().then(setDigitalId).catch(() => setDigitalId(null)).finally(() => setLoading(false))
         loadZones()
+        // Load tourist's open incidents to find one with assigned officer (for chat)
+        getMyIncidents?.().then(incidents => {
+            const withOfficer = incidents?.find(i => i.officerId && i.status !== 'RESOLVED')
+            if (withOfficer) setActiveIncident(withOfficer)
+        }).catch(() => {})
     }, [navigate, loadZones, session?.touristId])
 
     useEffect(() => {
@@ -129,8 +138,7 @@ export default function TouristDashboard() {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
                     {/* Map Panel */}
                     <div className="glass-panel" style={{ padding: '1.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -286,7 +294,17 @@ export default function TouristDashboard() {
                         )}
                     </div>
                 </div>
-            </div>
+
+                {/* Chat + Groups Row */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginTop: '1.25rem' }}>
+                    <ChatPanel
+                        incidentId={activeIncident?.id || null}
+                        myId={session?.touristId}
+                        myRole="TOURIST"
+                        officerName={activeIncident?.officerName || null}
+                    />
+                    <GroupPanel myId={session?.touristId} />
+                </div>
         </div>
     )
 }

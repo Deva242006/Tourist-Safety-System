@@ -26,14 +26,18 @@ public class JwtService {
         this.expirationMs = expirationMs;
     }
 
-    public String generateToken(UUID touristId, String email) {
+    public String generateToken(UUID id, String email) {
+        return generateToken(id, email, "TOURIST");
+    }
+
+    public String generateToken(UUID id, String email, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
-                .subject(touristId.toString())
+                .subject(id.toString())
                 .claim("email", email)
-                .claim("role", "TOURIST")
+                .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)

@@ -38,8 +38,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
         try {
-
-            System.out.println("hey");
             var result = touristService.register(req);
             Tourist tourist = result.tourist();
             String token = jwtService.generateToken(tourist.getId(), tourist.getEmail());

@@ -6,6 +6,7 @@ import com.example.TouristSafety.dto.IncidentResponse;
 import com.example.TouristSafety.service.IncidentService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,12 @@ public class IncidentController {
     @GetMapping
     public List<IncidentResponse> listAll() {
         return incidentService.listIncidents();
+    }
+
+    @GetMapping("/mine")
+    public List<IncidentResponse> getMyIncidents(Authentication authentication) {
+        UUID touristId = UUID.fromString(authentication.getName());
+        return incidentService.listByTourist(touristId);
     }
 
     @GetMapping("/{id}")
@@ -50,6 +57,15 @@ public class IncidentController {
     public ResponseEntity<?> updateStatus(@PathVariable UUID id, @RequestParam String status) {
         try {
             return ResponseEntity.ok(incidentService.updateStatus(id, status));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/{id}/assign")
+    public ResponseEntity<?> assignOfficer(@PathVariable UUID id, @RequestParam UUID officerId) {
+        try {
+            return ResponseEntity.ok(incidentService.assignOfficer(id, officerId));
         } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }

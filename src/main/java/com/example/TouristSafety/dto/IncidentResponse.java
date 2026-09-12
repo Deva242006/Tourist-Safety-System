@@ -8,6 +8,8 @@ public record IncidentResponse(
         UUID alertId,
         UUID touristId,
         String touristName,
+        UUID officerId,
+        String officerName,
         String description,
         String status,
         String firNumber,

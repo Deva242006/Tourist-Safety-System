@@ -6,36 +6,26 @@ import lombok.*;
 import java.time.Instant;
 import java.util.UUID;
 
-
 @Entity
-@Table(name = "officers")
+@Table(name = "travel_groups")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Officer {
+public class TravelGroup {
 
     @Id
     @GeneratedValue
     private UUID id;
 
     @Column(nullable = false)
-    private String fullName;
-
-    @Column(nullable = false, unique = true)
-    private String badgeNumber;
-
-    @Column(nullable = false, unique = true)
-    private String email;
+    private String name;
 
     @Column(nullable = false)
-    private String passwordHash;
+    private UUID leaderId; // touristId of the group creator
 
-    private String station;
-
-    @Column(nullable = false)
-    private String role; // ADMIN, OFFICER
+    private String description;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -43,6 +33,5 @@ public class Officer {
     @PrePersist
     void onCreate() {
         this.createdAt = Instant.now();
-        if (this.role == null) this.role = "OFFICER";
     }
 }

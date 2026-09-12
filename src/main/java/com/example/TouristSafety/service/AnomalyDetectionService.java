@@ -7,6 +7,7 @@ import com.example.TouristSafety.entity.Tourist;
 import com.example.TouristSafety.repository.AlertRepository;
 import com.example.TouristSafety.repository.LocationLogRepository;
 import com.example.TouristSafety.repository.TouristRepository;
+import com.example.TouristSafety.service.EmailAlertService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,13 +32,16 @@ public class AnomalyDetectionService {
     private final LocationLogRepository locationLogRepository;
     private final AlertRepository alertRepository;
     private final TouristRepository touristRepository;
+    private final EmailAlertService emailAlertService;
 
     public AnomalyDetectionService(LocationLogRepository locationLogRepository,
                                    AlertRepository alertRepository,
-                                   TouristRepository touristRepository) {
+                                   TouristRepository touristRepository,
+                                   EmailAlertService emailAlertService) {
         this.locationLogRepository = locationLogRepository;
         this.alertRepository = alertRepository;
         this.touristRepository = touristRepository;
+        this.emailAlertService = emailAlertService;
     }
 
     public void checkRouteDeviation(UUID touristId, double latitude, double longitude, Instant now) {
@@ -137,7 +141,15 @@ public class AnomalyDetectionService {
                 .message(message)
                 .status("OPEN")
                 .build();
-        alertRepository.save(alert);
+        alert = alertRepository.save(alert);
+
+        // Send admin email for HIGH and CRITICAL automated anomaly alerts
+        if ("CRITICAL".equalsIgnoreCase(severity) || "HIGH".equalsIgnoreCase(severity)) {
+            Alert finalAlert = alert;
+            touristRepository.findById(touristId).ifPresent(tourist ->
+                    emailAlertService.sendAdminAlertEmail(tourist, finalAlert)
+            );
+        }
     }
 
     private double haversineKm(double lat1, double lng1, double lat2, double lng2) {

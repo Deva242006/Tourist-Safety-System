@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getIncidentDetail, updateIncidentStatus } from '../api/incidents'
+import { getIncidentDetail, updateIncidentStatus, assignOfficer } from '../api/incidents'
+import { getOfficers } from '../api/officers'
 
 function formatDateTime(iso) {
     return iso ? new Date(iso).toLocaleString() : '—'
@@ -9,12 +10,15 @@ export default function IncidentDetailModal({ incidentId, onClose, onUpdated }) 
     const [detail, setDetail] = useState(null)
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
+    const [officers, setOfficers] = useState([])
+    const [assigning, setAssigning] = useState(false)
 
     useEffect(() => {
         getIncidentDetail(incidentId)
             .then(setDetail)
             .catch(() => setDetail(null))
             .finally(() => setLoading(false))
+        getOfficers().then(setOfficers).catch(() => setOfficers([]))
     }, [incidentId])
 
     async function handleStatusChange(status) {
@@ -27,6 +31,18 @@ export default function IncidentDetailModal({ incidentId, onClose, onUpdated }) 
         } finally {
             setUpdating(false)
         }
+    }
+
+    async function handleAssignOfficer(officerId) {
+        if (!officerId) return
+        setAssigning(true)
+        try {
+            await assignOfficer(incidentId, officerId)
+            const refreshed = await getIncidentDetail(incidentId)
+            setDetail(refreshed)
+            onUpdated?.()
+        } catch {}
+        finally { setAssigning(false) }
     }
 
     return (
@@ -114,6 +130,36 @@ export default function IncidentDetailModal({ incidentId, onClose, onUpdated }) 
                             <p className="text-sm text-slate-300 bg-slate-800/40 border border-slate-700/30 rounded-lg px-4 py-3">
                                 {detail.incident.description || '—'}
                             </p>
+                        </div>
+
+                        {/* Assign Officer */}
+                        <div className="mb-5 print:hidden">
+                            <h3 className="text-xs font-semibold tracking-wider uppercase text-slate-400 mb-2">Assign Officer</h3>
+                            {detail.incident.officerName ? (
+                                <div className="flex items-center gap-2 text-sm text-slate-300 bg-amber-500/10 border border-amber-500/25 rounded-lg px-4 py-2">
+                                    <span>👮</span>
+                                    <span className="font-semibold text-amber-400">{detail.incident.officerName}</span>
+                                    <span className="text-slate-500 text-xs ml-1">assigned</span>
+                                </div>
+                            ) : (
+                                <div className="flex gap-2">
+                                    <select
+                                        id="officer-assign-select"
+                                        onChange={e => handleAssignOfficer(e.target.value)}
+                                        disabled={assigning || officers.length === 0}
+                                        defaultValue=""
+                                        className="flex-1 text-sm bg-slate-800 border border-slate-700 text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500/50"
+                                    >
+                                        <option value="" disabled>{officers.length === 0 ? 'No officers available' : 'Select an officer...'}</option>
+                                        {officers.map(o => (
+                                            <option key={o.id} value={o.id}>
+                                                👮 {o.fullName} — {o.badgeNumber}{o.station ? ` · ${o.station}` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {assigning && <span className="text-xs text-amber-400 self-center">Assigning...</span>}
+                                </div>
+                            )}
                         </div>
 
                         {/* Actions */}

@@ -46,3 +46,28 @@ export function sendSos(touristId, latitude, longitude, message = '') {
         body: JSON.stringify({ touristId, latitude, longitude, message })
     })
 }
+
+export function subscribeToAlerts(onAlert) {
+    if (!client || !client.active) {
+        setTimeout(() => {
+            if (client && client.active) {
+                client.subscribe('/topic/alerts', (msg) => onAlert(JSON.parse(msg.body)))
+            }
+        }, 700)
+        return { unsubscribe: () => {} }
+    }
+    return client.subscribe('/topic/alerts', (msg) => onAlert(JSON.parse(msg.body)))
+}
+
+export function subscribeToChat(incidentId, onMessage) {
+    if (!client || !client.active) return null
+    return client.subscribe(`/topic/chat/${incidentId}`, (msg) => onMessage(JSON.parse(msg.body)))
+}
+
+export function sendChatMessage(incidentId, message, senderRole) {
+    if (!client || !client.active) return
+    client.publish({
+        destination: '/app/chat.send',
+        body: JSON.stringify({ incidentId, message, senderRole })
+    })
+}

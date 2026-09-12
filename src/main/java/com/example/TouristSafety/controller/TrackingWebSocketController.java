@@ -9,7 +9,9 @@ import com.example.TouristSafety.entity.Alert;
 import com.example.TouristSafety.entity.LocationLog;
 import com.example.TouristSafety.repository.AlertRepository;
 import com.example.TouristSafety.repository.LocationLogRepository;
+import com.example.TouristSafety.repository.TouristRepository;
 import com.example.TouristSafety.service.AnomalyDetectionService;
+import com.example.TouristSafety.service.EmailAlertService;
 import com.example.TouristSafety.service.GeoFenceService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,19 +24,25 @@ public class TrackingWebSocketController {
 
     private final LocationLogRepository locationLogRepository;
     private final AlertRepository alertRepository;
+    private final TouristRepository touristRepository;
     private final GeoFenceService geoFenceService;
     private final AnomalyDetectionService anomalyDetectionService;
+    private final EmailAlertService emailAlertService;
     private final SimpMessagingTemplate messagingTemplate;
 
     public TrackingWebSocketController(LocationLogRepository locationLogRepository,
                                        AlertRepository alertRepository,
+                                       TouristRepository touristRepository,
                                        GeoFenceService geoFenceService,
                                        AnomalyDetectionService anomalyDetectionService,
+                                       EmailAlertService emailAlertService,
                                        SimpMessagingTemplate messagingTemplate) {
         this.locationLogRepository = locationLogRepository;
         this.alertRepository = alertRepository;
+        this.touristRepository = touristRepository;
         this.geoFenceService = geoFenceService;
         this.anomalyDetectionService = anomalyDetectionService;
+        this.emailAlertService = emailAlertService;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -85,11 +93,16 @@ public class TrackingWebSocketController {
                 .message(msg.message() != null && !msg.message().isBlank() ? msg.message() : "SOS triggered")
                 .status("OPEN")
                 .build();
-        alert = alertRepository.save(alert);
+        final Alert savedAlert = alertRepository.save(alert);
 
         messagingTemplate.convertAndSend("/topic/alerts", new AlertBroadcast(
-                alert.getId(), alert.getTouristId(), alert.getType(), alert.getSeverity(),
-                alert.getMessage(), alert.getLatitude(), alert.getLongitude(),
-                alert.getStatus(), alert.getCreatedAt()));
+                savedAlert.getId(), savedAlert.getTouristId(), savedAlert.getType(), savedAlert.getSeverity(),
+                savedAlert.getMessage(), savedAlert.getLatitude(), savedAlert.getLongitude(),
+                savedAlert.getStatus(), savedAlert.getCreatedAt()));
+
+        // Send email alert to emergency contact
+        touristRepository.findById(msg.touristId()).ifPresent(tourist ->
+                emailAlertService.sendEmergencyContactAlert(tourist, savedAlert)
+        );
     }
 }

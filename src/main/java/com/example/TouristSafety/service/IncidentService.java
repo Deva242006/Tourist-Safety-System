@@ -3,9 +3,11 @@ package com.example.TouristSafety.service;
 import com.example.TouristSafety.dto.*;
 import com.example.TouristSafety.entity.Alert;
 import com.example.TouristSafety.entity.Incident;
+import com.example.TouristSafety.entity.Officer;
 import com.example.TouristSafety.entity.Tourist;
 import com.example.TouristSafety.repository.AlertRepository;
 import com.example.TouristSafety.repository.IncidentRepository;
+import com.example.TouristSafety.repository.OfficerRepository;
 import com.example.TouristSafety.repository.TouristRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,15 +28,18 @@ public class IncidentService {
     private final AlertRepository alertRepository;
     private final TouristRepository touristRepository;
     private final TouristProfileService touristProfileService;
+    private final OfficerRepository officerRepository;
 
     public IncidentService(IncidentRepository incidentRepository,
                            AlertRepository alertRepository,
                            TouristRepository touristRepository,
-                           TouristProfileService touristProfileService) {
+                           TouristProfileService touristProfileService,
+                           OfficerRepository officerRepository) {
         this.incidentRepository = incidentRepository;
         this.alertRepository = alertRepository;
         this.touristRepository = touristRepository;
         this.touristProfileService = touristProfileService;
+        this.officerRepository = officerRepository;
     }
 
     @Transactional
@@ -66,6 +71,12 @@ public class IncidentService {
     public List<IncidentResponse> listIncidents() {
         return incidentRepository.findAll().stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(i -> toResponse(i, resolveTouristName(i.getTouristId())))
+                .toList();
+    }
+
+    public List<IncidentResponse> listByTourist(UUID touristId) {
+        return incidentRepository.findByTouristIdOrderByCreatedAtDesc(touristId).stream()
                 .map(i -> toResponse(i, resolveTouristName(i.getTouristId())))
                 .toList();
     }
@@ -102,13 +113,31 @@ public class IncidentService {
         return toResponse(incident, resolveTouristName(incident.getTouristId()));
     }
 
+    @Transactional
+    public IncidentResponse assignOfficer(UUID incidentId, UUID officerId) {
+        Incident incident = incidentRepository.findById(incidentId)
+                .orElseThrow(() -> new NoSuchElementException("Incident not found: " + incidentId));
+        officerRepository.findById(officerId)
+                .orElseThrow(() -> new NoSuchElementException("Officer not found: " + officerId));
+
+        incident.setOfficerId(officerId);
+        incident = incidentRepository.save(incident);
+        return toResponse(incident, resolveTouristName(incident.getTouristId()));
+    }
+
     private String resolveTouristName(UUID touristId) {
         return touristRepository.findById(touristId).map(Tourist::getFullName).orElse("Unknown");
+    }
+
+    private String resolveOfficerName(UUID officerId) {
+        if (officerId == null) return null;
+        return officerRepository.findById(officerId).map(Officer::getFullName).orElse(null);
     }
 
     private IncidentResponse toResponse(Incident i, String touristName) {
         return new IncidentResponse(
                 i.getId(), i.getAlertId(), i.getTouristId(), touristName,
+                i.getOfficerId(), resolveOfficerName(i.getOfficerId()),
                 i.getDescription(), i.getStatus(), i.getFirNumber(), i.getCreatedAt(), i.getResolvedAt());
     }
 

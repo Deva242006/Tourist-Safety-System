@@ -5,6 +5,12 @@ export async function getIncidents() {
     return data
 }
 
+export async function getMyIncidents() {
+    const { data } = await client.get('/incidents/mine')
+    return data
+}
+
+
 export async function getIncidentDetail(incidentId) {
     const { data } = await client.get(`/incidents/${incidentId}`)
     return data
@@ -17,5 +23,10 @@ export async function fileIncident(alertId, description) {
 
 export async function updateIncidentStatus(incidentId, status) {
     const { data } = await client.patch(`/incidents/${incidentId}/status`, null, { params: { status } })
+    return data
+}
+
+export async function assignOfficer(incidentId, officerId) {
+    const { data } = await client.patch(`/incidents/${incidentId}/assign`, null, { params: { officerId } })
     return data
 }
