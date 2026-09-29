@@ -41,7 +41,7 @@ function timeAgo(iso) {
 }
 
 export default function LiveMap({ zones = [], position, markers = [] }) {
-    const [center, setCenter] = useState([26.1445, 91.7362]) // Default Guwahati
+    const [center, setCenter] = useState([11.0168, 76.9558]) // Default Coimbatore
 
     useEffect(() => {
         if (position) {

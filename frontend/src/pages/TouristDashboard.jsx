@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMyDigitalId, getSession } from '../api/auth'
 import { getZones, checkLocation } from '../api/zones'
@@ -18,12 +18,19 @@ export default function TouristDashboard() {
     const [loading, setLoading] = useState(true)
     const [zones, setZones] = useState([])
     const [position, setPosition] = useState(null)
+    const [gpsAccuracy, setGpsAccuracy] = useState(null)
+    const [manualPosition, setManualPosition] = useState(null)
+    const [locationSource, setLocationSource] = useState('gps') // 'gps' | 'manual'
     const [checkResult, setCheckResult] = useState(null)
     const [checking, setChecking] = useState(false)
     const [sosSent, setSosSent] = useState(false)
     const [activeIncident, setActiveIncident] = useState(null) // incident with assigned officer for chat
     const navigate = useNavigate()
     const session = getSession()
+    const manualPositionRef = useRef(null)
+
+    // The effective position used across the dashboard
+    const effectivePosition = manualPosition || position
 
     const loadZones = useCallback(() => {
         getZones().then(setZones).catch(() => setZones([]))
@@ -44,27 +51,65 @@ export default function TouristDashboard() {
         if (!session) return
         connectSocket()
         function pushLocation() {
+            // If manual position is set, only push manual coords — NEVER call GPS
+            if (manualPositionRef.current) {
+                const [lat, lng] = manualPositionRef.current
+                sendLocationUpdate(session.touristId, lat, lng)
+                return
+            }
             if (!navigator.geolocation) return
             navigator.geolocation.getCurrentPosition((pos) => {
-                const { latitude, longitude } = pos.coords
+                // GUARD: If manual position was set WHILE GPS was resolving, bail out completely
+                if (manualPositionRef.current) return
+                const { latitude, longitude, accuracy } = pos.coords
                 setPosition([latitude, longitude])
+                setGpsAccuracy(accuracy) // accuracy in meters
                 sendLocationUpdate(session.touristId, latitude, longitude)
             }, (err) => {
                 console.warn("Location error:", err)
-            }, { enableHighAccuracy: true })
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
         }
         pushLocation()
         const interval = setInterval(pushLocation, LOCATION_PUSH_INTERVAL_MS)
         return () => { clearInterval(interval); disconnectSocket() }
     }, [session?.touristId])
 
+    // Handle manual location set from map click
+    function handleManualLocationSet(latlng) {
+        if (latlng) {
+            // Set ref IMMEDIATELY so any in-flight GPS callback sees it right away
+            manualPositionRef.current = latlng
+            setManualPosition(latlng)
+            setLocationSource('manual')
+            // Immediately push the corrected location
+            if (session) {
+                sendLocationUpdate(session.touristId, latlng[0], latlng[1])
+            }
+        } else {
+            // Clear manual — resume GPS tracking
+            manualPositionRef.current = null
+            setManualPosition(null)
+            setLocationSource('gps')
+        }
+    }
+
     function handleCheckLocation() {
+        if (manualPosition) {
+            // Use manual position for zone check
+            setChecking(true)
+            checkLocation(manualPosition[0], manualPosition[1])
+                .then(result => setCheckResult(result))
+                .catch(() => setCheckResult({ insideAnyZone: false, matchedZones: [], error: true }))
+                .finally(() => setChecking(false))
+            return
+        }
         if (!navigator.geolocation) { alert('Geolocation is not supported by this browser.'); return }
         setChecking(true)
         navigator.geolocation.getCurrentPosition(
             async (pos) => {
-                const { latitude, longitude } = pos.coords
+                const { latitude, longitude, accuracy } = pos.coords
                 setPosition([latitude, longitude])
+                setGpsAccuracy(accuracy)
                 try {
                     const result = await checkLocation(latitude, longitude)
                     setCheckResult(result)
@@ -73,11 +118,18 @@ export default function TouristDashboard() {
                 } finally { setChecking(false) }
             },
             () => { setChecking(false); alert('Could not get your location. Check browser location permissions.') },
-            { enableHighAccuracy: true }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         )
     }
 
     function handleSos() {
+        // Use effective position (manual or GPS) for SOS
+        if (manualPosition) {
+            sendSos(session.touristId, manualPosition[0], manualPosition[1], 'Emergency SOS triggered from tourist app (manual location)')
+            setSosSent(true)
+            setTimeout(() => setSosSent(false), 5000)
+            return
+        }
         if (!navigator.geolocation) { alert('Geolocation is not supported.'); return }
         navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -118,25 +170,31 @@ export default function TouristDashboard() {
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
                         padding: '0.5rem 1rem',
                         borderRadius: '9999px',
-                        background: position
-                            ? 'rgba(52, 211, 153, 0.08)'
-                            : 'rgba(251, 191, 36, 0.08)',
-                        border: `1px solid ${position ? 'rgba(52,211,153,0.2)' : 'rgba(251,191,36,0.2)'}`,
+                        background: manualPosition
+                            ? 'rgba(245, 158, 11, 0.08)'
+                            : effectivePosition
+                                ? 'rgba(52, 211, 153, 0.08)'
+                                : 'rgba(251, 191, 36, 0.08)',
+                        border: `1px solid ${manualPosition ? 'rgba(245,158,11,0.2)' : effectivePosition ? 'rgba(52,211,153,0.2)' : 'rgba(251,191,36,0.2)'}`,
                     }}>
                         <span style={{
                             width: '7px', height: '7px',
                             borderRadius: '50%',
-                            background: position ? 'var(--accent-emerald)' : 'var(--accent-amber)',
-                            boxShadow: position ? '0 0 8px rgba(52,211,153,0.8)' : '0 0 8px rgba(251,191,36,0.8)',
+                            background: manualPosition ? '#f59e0b' : effectivePosition ? 'var(--accent-emerald)' : 'var(--accent-amber)',
+                            boxShadow: manualPosition ? '0 0 8px rgba(245,158,11,0.8)' : effectivePosition ? '0 0 8px rgba(52,211,153,0.8)' : '0 0 8px rgba(251,191,36,0.8)',
                             animation: 'dotPulse 2s ease-in-out infinite',
                             flexShrink: 0,
                         }} />
                         <span style={{
                             fontSize: '0.75rem',
                             fontWeight: 600,
-                            color: position ? 'var(--accent-emerald)' : 'var(--accent-amber)',
+                            color: manualPosition ? '#f59e0b' : effectivePosition ? 'var(--accent-emerald)' : 'var(--accent-amber)',
                         }}>
-                            {position ? `Tracking · every ${LOCATION_PUSH_INTERVAL_MS / 1000}s` : 'Waiting for GPS...'}
+                            {manualPosition
+                                ? '🎯 Manual location set'
+                                : effectivePosition
+                                    ? `Tracking · every ${LOCATION_PUSH_INTERVAL_MS / 1000}s${gpsAccuracy && gpsAccuracy > 1000 ? ' · ⚠️ Low accuracy' : ''}`
+                                    : 'Waiting for GPS...'}
                         </span>
                     </div>
                     <button onClick={() => navigate('/tourist/profile')} style={{
@@ -206,9 +264,67 @@ export default function TouristDashboard() {
                             </div>
                         </div>
 
-                        <div style={{ height: '340px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-                            <ZoneMap zones={zones} position={position} />
+                        <div style={{ height: '380px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+                            <ZoneMap
+                                zones={zones}
+                                position={effectivePosition}
+                                accuracy={gpsAccuracy}
+                                onManualLocationSet={handleManualLocationSet}
+                            />
                         </div>
+
+                        {/* Current location info */}
+                        {effectivePosition && (
+                            <div style={{
+                                marginTop: '0.75rem',
+                                padding: '0.6rem 0.875rem',
+                                borderRadius: '8px',
+                                background: 'rgba(56,189,248,0.05)',
+                                border: '1px solid rgba(56,189,248,0.12)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '0.5rem',
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ fontSize: '14px' }}>{manualPosition ? '🎯' : '📍'}</span>
+                                    <div>
+                                        <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                            {manualPosition ? 'Manual Location' : 'GPS Location'}
+                                        </p>
+                                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+                                            {effectivePosition[0].toFixed(5)}, {effectivePosition[1].toFixed(5)}
+                                        </p>
+                                    </div>
+                                </div>
+                                {gpsAccuracy && !manualPosition && (
+                                    <span style={{
+                                        padding: '0.2rem 0.5rem',
+                                        borderRadius: '9999px',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 700,
+                                        background: gpsAccuracy > 1000 ? 'rgba(245,158,11,0.1)' : 'rgba(52,211,153,0.08)',
+                                        border: `1px solid ${gpsAccuracy > 1000 ? 'rgba(245,158,11,0.25)' : 'rgba(52,211,153,0.2)'}`,
+                                        color: gpsAccuracy > 1000 ? '#f59e0b' : '#34d399',
+                                    }}>
+                                        {gpsAccuracy > 1000 ? `~${(gpsAccuracy / 1000).toFixed(1)}km ⚠️` : `~${Math.round(gpsAccuracy)}m ✅`}
+                                    </span>
+                                )}
+                                {manualPosition && (
+                                    <span style={{
+                                        padding: '0.2rem 0.5rem',
+                                        borderRadius: '9999px',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 700,
+                                        background: 'rgba(52,211,153,0.08)',
+                                        border: '1px solid rgba(52,211,153,0.2)',
+                                        color: '#34d399',
+                                    }}>
+                                        User set ✅
+                                    </span>
+                                )}
+                            </div>
+                        )}
 
                         {checkResult && (
                             <div className="animate-slide-down" style={{
